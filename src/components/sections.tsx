@@ -1,0 +1,674 @@
+import { useMemo } from 'react';
+import {
+  ArrowRight,
+  BadgeCheck,
+  CalendarClock,
+  Check,
+  ChevronDown,
+  Clock3,
+  Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  ShieldCheck,
+  Smartphone,
+  TrendingDown,
+} from 'lucide-react';
+import logo from '../assets/tum-logo.png';
+import {
+  BORROWER,
+  OFFICER,
+  QUOTE_ID,
+  RATES_AS_OF,
+  REVIEWS,
+  REVIEW_SOURCES,
+  RateOption,
+  Scenario,
+  TERMS,
+  TermId,
+  breakEven,
+  costOver,
+  estimates,
+  loanAmount,
+  num,
+  pct,
+  usd,
+  zipInfo,
+} from '../lib';
+import { LoneStar, Segmented, Stars, Toggle, useTween } from './ui';
+
+// ── Header ────────────────────────────────────────────────────
+export function Header({ onSchedule }: { onSchedule: () => void }) {
+  return (
+    <header className="topbar">
+      <div className="topbar-in">
+        <a href="#top" className="brand" aria-label="Texas United Mortgage home">
+          <img src={logo} alt="Texas United Mortgage" />
+        </a>
+        <span className="topbar-label">Borrower portal</span>
+        <div className="topbar-right">
+          <button className="btn btn--ghost btn--sm hide-sm" onClick={onSchedule}>
+            <CalendarClock size={16} /> Schedule a call
+          </button>
+          <button className="avatar-btn" aria-label="Account menu">
+            <span className="avatar">{BORROWER.initials}</span>
+            <span className="hide-sm">{BORROWER.first} {BORROWER.last[0]}.</span>
+            <ChevronDown size={16} className="hide-sm" />
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// ── Hero: the selected rate ───────────────────────────────────
+export function Hero({
+  option,
+  refOption,
+  scenario,
+  isPicked,
+  onApply,
+  onSchedule,
+  onEdit,
+}: {
+  option: RateOption;
+  refOption: RateOption;
+  scenario: Scenario;
+  isPicked: boolean;
+  onApply: () => void;
+  onSchedule: () => void;
+  onEdit: () => void;
+}) {
+  const rate = useTween(option.rate);
+  const pay = useTween(option.payment);
+  const est = estimates(scenario);
+  const piti = option.payment + est.tax + est.ins + est.mi;
+  const ratio = scenario.income > 0 ? piti / scenario.income : 0;
+  const ratioT = useTween(ratio * 100);
+  const loan = loanAmount(scenario);
+  const downPct = scenario.price ? Math.round((scenario.down / scenario.price) * 100) : 0;
+  const verdict = ratio <= 0.28 ? 'Comfortable' : ratio <= 0.36 ? 'Manageable' : 'A stretch';
+  const tone = ratio <= 0.28 ? 'good' : ratio <= 0.36 ? 'warn' : 'bad';
+
+  return (
+    <section className="hero" aria-labelledby="hero-title">
+      <LoneStar className="hero-star" />
+      <div className="hero-grid">
+        <div className="hero-main">
+          <p className="eyebrow eyebrow--light" id="hero-title">
+            {isPicked ? 'Your selected rate' : 'Your lowest available rate'}
+          </p>
+          <div className="hero-rate">
+            <span className="hero-rate-num">{rate.toFixed(3)}</span>
+            <span className="hero-rate-pct">%</span>
+          </div>
+          <p className="hero-sub">
+            <strong>{pct(option.apr)} APR</strong>
+            <span className="dot" />
+            {option.termLabel}
+            <span className="dot" />
+            {option.fees >= 0 ? `${option.points.toFixed(3)} pts · ${usd(option.fees)}` : `${usd(-option.fees)} lender credit`}
+          </p>
+          {refOption.payment - option.payment >= 1 && (
+            <p className="hero-save">
+              <TrendingDown size={16} aria-hidden />
+              <span>
+                Saves <b>{usd(refOption.payment - option.payment)}/mo</b> vs. the {pct(refOption.rate)} low-cost option
+                {breakEven(option, refOption) ? `, paying back its upfront cost in about ${(breakEven(option, refOption)! / 12).toFixed(1)} years.` : '.'}
+              </span>
+            </p>
+          )}
+        </div>
+
+        <div className="hero-pay">
+          <p className="eyebrow eyebrow--light">Monthly payment</p>
+          <p className="hero-pay-num">{usd(pay)}</p>
+          <p className="hero-pay-sub">Principal &amp; interest</p>
+          <div className={`afford afford--${tone}`}>
+            <div className="afford-row">
+              <span>Housing cost vs. income</span>
+              <strong>{Math.round(ratioT)}%</strong>
+            </div>
+            <div className="afford-meter" aria-hidden>
+              <span style={{ width: `${Math.min(100, (ratioT / 50) * 100)}%` }} />
+              <i style={{ left: `${(28 / 50) * 100}%` }} />
+              <i style={{ left: `${(36 / 50) * 100}%` }} />
+            </div>
+            <p className="afford-note">
+              <b>{verdict}.</b> {usd(piti)}/mo with est. taxes &amp; insurance on {usd(scenario.income)}/mo income.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <dl className="hero-stats">
+        <div>
+          <dt>Loan amount</dt>
+          <dd>{usd(loan)}</dd>
+          <span>{scenario.purpose === 'Purchase' ? `${downPct}% down payment` : 'Refinance'}</span>
+        </div>
+        <div>
+          <dt>Credit score</dt>
+          <dd>{scenario.credit}</dd>
+          <span>Estimated</span>
+        </div>
+        <div>
+          <dt>Loan type</dt>
+          <dd>{scenario.loanType}</dd>
+          <span>{option.termLabel}</span>
+        </div>
+        <div>
+          <dt>Property</dt>
+          <dd>{zipInfo(scenario.zip)?.city ?? scenario.zip}</dd>
+          <span>{scenario.propertyType}</span>
+        </div>
+      </dl>
+
+      <div className="hero-actions">
+        <button className="btn btn--primary btn--lg" onClick={onApply}>
+          Apply now <ArrowRight size={18} />
+        </button>
+        <button className="btn btn--onDark btn--lg" onClick={onSchedule}>
+          <CalendarClock size={18} /> Schedule a call
+        </button>
+        <button className="link-light" onClick={onEdit}>
+          <Pencil size={14} /> Edit my details
+        </button>
+      </div>
+    </section>
+  );
+}
+
+// ── Scenario summary ──────────────────────────────────────────
+export function ScenarioBar({ s, onEdit }: { s: Scenario; onEdit: () => void }) {
+  const z = zipInfo(s.zip);
+  const chips = [
+    s.purpose,
+    z ? `${z.city} ${s.zip}` : s.zip,
+    `${usd(s.price)} ${s.purpose === 'Purchase' ? 'price' : 'value'}`,
+    s.purpose === 'Purchase' ? `${usd(s.down)} down` : `${usd(loanAmount(s))} balance`,
+    `${s.credit} credit`,
+    s.propertyType,
+    s.occupancy,
+    s.loanType,
+    ...(s.firstTime && s.purpose === 'Purchase' ? ['First-time buyer'] : []),
+  ];
+  return (
+    <div className="scenario">
+      <div className="scenario-chips" aria-label="Your loan details">
+        <MapPin size={15} className="scenario-ic" aria-hidden />
+        {chips.map((c) => (
+          <span className="chip" key={c}>
+            {c}
+          </span>
+        ))}
+      </div>
+      <button className="btn btn--soft btn--sm" onClick={onEdit}>
+        <Pencil size={14} /> Edit details
+      </button>
+    </div>
+  );
+}
+
+// ── Rate explorer ─────────────────────────────────────────────
+export type SortKey = 'rate' | 'upfront' | 'value';
+
+export function RateExplorer(props: {
+  scenario: Scenario;
+  options: RateOption[];
+  term: TermId;
+  setTerm: (t: TermId) => void;
+  horizon: number;
+  setHorizon: (n: number) => void;
+  sort: SortKey;
+  setSort: (s: SortKey) => void;
+  waive: boolean;
+  setWaive: (b: boolean) => void;
+  showTotal: boolean;
+  setShowTotal: (b: boolean) => void;
+  selectedId: string;
+  onSelect: (id: string) => void;
+  compare: string[];
+  toggleCompare: (id: string) => void;
+  expanded: string | null;
+  setExpanded: (id: string | null) => void;
+  showAll: boolean;
+  setShowAll: (b: boolean) => void;
+  onEdit: () => void;
+  onApply: (id: string) => void;
+  onSchedule: () => void;
+  updating: boolean;
+}) {
+  const { scenario, options, horizon, sort, showTotal } = props;
+  const loan = loanAmount(scenario);
+  const est = estimates(scenario);
+  const extra = est.tax + est.ins + est.mi;
+
+  const meta = useMemo(() => {
+    const costs = new Map(options.map((o) => [o.id, costOver(o, loan, horizon)]));
+    const lowestRate = options.reduce((a, b) => (b.rate < a.rate ? b : a));
+    const bestValue = options.reduce((a, b) => (costs.get(b.id)! < costs.get(a.id)! ? b : a));
+    const lowestUpfront = options.reduce((a, b) => (b.fees < a.fees ? b : a));
+    const ref = options.reduce((a, b) => (Math.abs(b.points) < Math.abs(a.points) ? b : a));
+    return { costs, lowestRate, bestValue, lowestUpfront, ref };
+  }, [options, loan, horizon]);
+
+  const sorted = useMemo(() => {
+    const list = [...options];
+    if (sort === 'rate') list.sort((a, b) => a.rate - b.rate);
+    if (sort === 'upfront') list.sort((a, b) => a.fees - b.fees);
+    if (sort === 'value') list.sort((a, b) => meta.costs.get(a.id)! - meta.costs.get(b.id)!);
+    return list;
+  }, [options, sort, meta]);
+
+  const visible = props.showAll ? sorted : sorted.slice(0, 5);
+
+  return (
+    <section className="panel rates" id="rates" aria-labelledby="rates-title">
+      <div className="panel-head">
+        <div>
+          <h2 id="rates-title" className="h2">Your rates, on demand</h2>
+          <p className="muted">
+            Live pricing for your scenario. Rates as of {RATES_AS_OF} · Quote #{QUOTE_ID}
+          </p>
+        </div>
+      </div>
+
+      <ScenarioBar s={scenario} onEdit={props.onEdit} />
+
+      <div className="term-scroll">
+        <Segmented
+          label="Loan term"
+          value={props.term}
+          onChange={props.setTerm}
+          options={TERMS.map((t) => ({ value: t.id, label: t.short }))}
+        />
+      </div>
+
+      <div className="horizon">
+        <div className="horizon-copy">
+          <p className="horizon-q">How long do you plan to keep this loan?</p>
+          <p className="muted small">
+            Paying points lowers your rate but costs more today. We'll flag the option with the lowest total cost for your timeline.
+          </p>
+        </div>
+        <Segmented
+          label="Years you plan to keep the loan"
+          size="sm"
+          value={horizon}
+          onChange={props.setHorizon}
+          options={[3, 5, 7, 10].map((y) => ({ value: y, label: `${y} yrs` }))}
+        />
+      </div>
+
+      <div className="list-tools">
+        <div className="list-toggles">
+          <Toggle id="waive" checked={props.waive} onChange={props.setWaive} label="Waive escrows" />
+          <Toggle id="total" checked={showTotal} onChange={props.setShowTotal} label="Show total payment" />
+        </div>
+        <label className="sort">
+          <span>Sort</span>
+          <select id="sort" value={sort} onChange={(e) => props.setSort(e.target.value as SortKey)}>
+            <option value="rate">Lowest rate</option>
+            <option value="upfront">Lowest upfront cost</option>
+            <option value="value">Best value for {horizon} yrs</option>
+          </select>
+          <ChevronDown size={14} aria-hidden />
+        </label>
+      </div>
+
+      <div className={`rate-table ${props.updating ? 'is-updating' : ''}`}>
+        <div className="rate-head" aria-hidden>
+          <span>Rate / APR</span>
+          <span>Upfront</span>
+          <span>{showTotal ? 'Total monthly' : 'Monthly P&I'}</span>
+          <span>Cost over {horizon} yrs</span>
+          <span />
+        </div>
+        <ul className="rate-list">
+          {visible.map((o) => {
+            const tags: { label: string; tone: string }[] = [];
+            if (o.id === meta.lowestRate.id) tags.push({ label: 'Lowest rate', tone: 'navy' });
+            if (o.id === meta.bestValue.id) tags.push({ label: `Best value · ${horizon} yrs`, tone: 'green' });
+            if (o.id === meta.lowestUpfront.id) tags.push({ label: 'Lowest closing cost', tone: 'slate' });
+            const isOpen = props.expanded === o.id;
+            const isSel = props.selectedId === o.id;
+            const inCompare = props.compare.includes(o.id);
+            const be = breakEven(o, meta.ref);
+            const monthly = o.payment + (showTotal ? extra : 0);
+            return (
+              <li key={o.id} className={`rate-row ${isOpen ? 'is-open' : ''} ${isSel ? 'is-selected' : ''}`}>
+                <div className="rate-main">
+                  <button
+                    className="rate-hit"
+                    aria-expanded={isOpen}
+                    aria-controls={`d-${o.id}`}
+                    onClick={() => props.setExpanded(isOpen ? null : o.id)}
+                  >
+                    <span className="rate-cell rate-cell--rate">
+                      <span className="badge">{o.badge}</span>
+                      <span>
+                        <span className="rate-big">{pct(o.rate)}</span>
+                        <span className="rate-apr">{pct(o.apr)} APR</span>
+                      </span>
+                    </span>
+                    <span className="rate-cell rate-cell--up">
+                      <span className="cell-label">Upfront</span>
+                      {o.fees >= 0 ? (
+                        <>
+                          <span className="v">{usd(o.fees)}</span>
+                          <span className="pill pill--amber">{o.points.toFixed(3)} pts</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="v v--green">−{usd(-o.fees)}</span>
+                          <span className="pill pill--green">credit</span>
+                        </>
+                      )}
+                    </span>
+                    <span className="rate-cell rate-cell--pay">
+                      <span className="cell-label">{showTotal ? 'Total' : 'P&I'}</span>
+                      <span className="v">
+                        {usd(monthly)}
+                        <small>/mo</small>
+                      </span>
+                    </span>
+                    <span className="rate-cell rate-cell--cost">
+                      <span className="cell-label">{horizon}-yr cost</span>
+                      <span className="v v--muted">{usd(meta.costs.get(o.id)!)}</span>
+                    </span>
+                    {(tags.length > 0 || isSel) && (
+                      <span className="rate-tags">
+                        {isSel && (
+                          <span className="tag tag--sel">
+                            <Check size={12} /> Selected
+                          </span>
+                        )}
+                        {tags.map((t) => (
+                          <span key={t.label} className={`tag tag--${t.tone}`}>
+                            {t.label}
+                          </span>
+                        ))}
+                      </span>
+                    )}
+                  </button>
+                  <div className="rate-actions">
+                    <label className={`cmp ${inCompare ? 'is-on' : ''}`}>
+                      <input
+                        type="checkbox"
+                        checked={inCompare}
+                        onChange={() => props.toggleCompare(o.id)}
+                        aria-label={`Compare ${pct(o.rate)}`}
+                      />
+                      <span className="cmp-box" aria-hidden>
+                        <Check size={12} />
+                      </span>
+                      <span className="cmp-txt">Compare</span>
+                    </label>
+                    <ChevronDown size={18} className="chev" aria-hidden />
+                  </div>
+                </div>
+
+                <div className="rate-detail" id={`d-${o.id}`} hidden={!isOpen}>
+                  <div className="detail-grid">
+                    <div className="detail-block">
+                      <h4>Monthly payment</h4>
+                      <dl className="kv">
+                        <div><dt>Principal &amp; interest</dt><dd>{usd(o.payment)}</dd></div>
+                        <div><dt>Property tax (est.)</dt><dd>{usd(est.tax)}</dd></div>
+                        <div><dt>Home insurance (est.)</dt><dd>{usd(est.ins)}</dd></div>
+                        {est.mi > 0 && <div><dt>Mortgage insurance (est.)</dt><dd>{usd(est.mi)}</dd></div>}
+                        <div className="kv-total"><dt>Total</dt><dd>{usd(o.payment + extra)}</dd></div>
+                      </dl>
+                    </div>
+                    <div className="detail-block">
+                      <h4>What this option means</h4>
+                      <ul className="explain">
+                        <li>
+                          {o.fees >= 0
+                            ? `You pay ${o.points.toFixed(3)} discount points (${usd(o.fees)}) at closing to lock ${pct(o.rate)}.`
+                            : `The lender gives you ${usd(-o.fees)} toward closing costs in exchange for a ${pct(o.rate)} rate.`}
+                        </li>
+                        {be && o.id !== meta.ref.id && (
+                          <li>
+                            Compared with {pct(meta.ref.rate)}, you save {usd(meta.ref.payment - o.payment)}/mo and recover the extra upfront cost in{' '}
+                            <b>{be} months ({(be / 12).toFixed(1)} yrs)</b>.
+                          </li>
+                        )}
+                        <li>
+                          Interest plus upfront cost over {horizon} years: <b>{usd(meta.costs.get(o.id)!)}</b>.
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="detail-actions">
+                    <button className="btn btn--outline btn--sm" onClick={() => props.onSelect(o.id)} disabled={isSel}>
+                      {isSel ? <><Check size={15} /> Selected</> : 'Select this rate'}
+                    </button>
+                    <button className="btn btn--primary btn--sm" onClick={() => props.onApply(o.id)}>
+                      Apply with this rate <ArrowRight size={15} />
+                    </button>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      {sorted.length > 5 && (
+        <button className="show-more" onClick={() => props.setShowAll(!props.showAll)}>
+          {props.showAll ? 'Show fewer options' : `Show ${sorted.length - 5} more options`}
+          <ChevronDown size={16} className={props.showAll ? 'flip' : ''} />
+        </button>
+      )}
+
+      <div className="unsure">
+        <div className="unsure-ic" aria-hidden>
+          <Clock3 size={20} />
+        </div>
+        <div className="unsure-copy">
+          <p className="unsure-t">Not sure which option fits?</p>
+          <p className="muted small">
+            {OFFICER.name.split(' ')[0]} can walk you through points, credits and timing in a 15-minute call. No obligation.
+          </p>
+        </div>
+        <button className="btn btn--outline" onClick={props.onSchedule}>
+          <CalendarClock size={16} /> Schedule a call
+        </button>
+      </div>
+    </section>
+  );
+}
+
+// ── Loan officer ──────────────────────────────────────────────
+export function OfficerCard({ onApply, onSchedule, uid }: { onApply: () => void; onSchedule: () => void; uid: string }) {
+  return (
+    <section className="panel officer" aria-labelledby={`lo-title-${uid}`}>
+      <div className="officer-top">
+        <div className="officer-photo" aria-hidden>
+          SS
+          <span className="officer-online" />
+        </div>
+        <div className="officer-id">
+          <p className="eyebrow">Your loan officer</p>
+          <h2 id={`lo-title-${uid}`} className="officer-name">{OFFICER.name}</h2>
+          <p className="muted small">
+            {OFFICER.title} · NMLS #{OFFICER.nmls}
+          </p>
+        </div>
+      </div>
+      <a href="#reviews" className="officer-rating">
+        <Stars value={OFFICER.rating} />
+        <b>{OFFICER.rating}</b>
+        <span>({num(OFFICER.reviews)} reviews)</span>
+      </a>
+      <ul className="contact">
+        <li>
+          <Smartphone size={16} aria-hidden />
+          <span>Mobile</span>
+          <a href={`tel:${OFFICER.mobile.replace(/\D/g, '')}`}>{OFFICER.mobile}</a>
+        </li>
+        <li>
+          <Phone size={16} aria-hidden />
+          <span>Office</span>
+          <a href={`tel:${OFFICER.office.replace(/\D/g, '')}`}>{OFFICER.office}</a>
+        </li>
+        <li>
+          <Mail size={16} aria-hidden />
+          <span>Email</span>
+          <a href={`mailto:${OFFICER.email}`}>{OFFICER.email}</a>
+        </li>
+      </ul>
+      <div className="officer-cta">
+        <button className="btn btn--primary btn--block" onClick={onApply}>
+          Apply now <ArrowRight size={17} />
+        </button>
+        <button className="btn btn--outline btn--block" onClick={onSchedule}>
+          <CalendarClock size={16} /> Schedule a call
+        </button>
+      </div>
+      <p className="officer-trust">
+        <ShieldCheck size={15} aria-hidden /> Checking rates never affects your credit score.
+      </p>
+    </section>
+  );
+}
+
+// ── Reviews ───────────────────────────────────────────────────
+export function Reviews() {
+  const max = Math.max(...REVIEW_SOURCES.map((s) => s.count));
+  return (
+    <section className="panel reviews" id="reviews" aria-labelledby="rev-title">
+      <div className="reviews-grid">
+        <div className="reviews-summary">
+          <h2 id="rev-title" className="h2">What borrowers say</h2>
+          <div className="score">
+            <span className="score-num">{OFFICER.rating.toFixed(2)}</span>
+            <div>
+              <Stars value={OFFICER.rating} size={18} />
+              <p className="muted small">{num(OFFICER.reviews)} verified reviews</p>
+            </div>
+          </div>
+          <ul className="sources">
+            {REVIEW_SOURCES.map((s) => (
+              <li key={s.name}>
+                <span className="src-name">{s.name}</span>
+                <span className="src-bar" aria-hidden>
+                  <span style={{ width: `${Math.max(3, (s.count / max) * 100)}%` }} />
+                </span>
+                <span className="src-rating">{s.rating.toFixed(2)}</span>
+                <span className="src-count">{num(s.count)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="reviews-track" tabIndex={0} aria-label="Recent reviews">
+          {REVIEWS.map((r) => (
+            <figure className="review" key={r.name}>
+              <Stars value={5} size={13} />
+              <blockquote>{r.text}</blockquote>
+              <figcaption>
+                <span className="rv-avatar" aria-hidden>
+                  {r.name
+                    .split(' ')
+                    .map((p) => p[0])
+                    .slice(0, 2)
+                    .join('')}
+                </span>
+                <span>
+                  <b>{r.name}</b>
+                  <span className="muted small">
+                    {r.when} · {r.source}
+                  </span>
+                </span>
+                <BadgeCheck size={16} className="rv-check" aria-label="Verified" />
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Footer ────────────────────────────────────────────────────
+export function Footer() {
+  return (
+    <footer className="foot">
+      <div className="foot-in">
+        <div className="foot-brand">
+          <img src={logo} alt="Texas United Mortgage" />
+          <span className="eho">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+              <path d="M12 3 2 10h2v10h16V10h2L12 3Zm4 13H8v-2h8v2Zm0-4H8v-2h8v2Z" fill="currentColor" />
+            </svg>
+            Equal Housing Opportunity
+          </span>
+        </div>
+        <p className="foot-legal">
+          Prototype for demonstration. Rates and reviews shown are sample data and are not an offer to lend. Additional fees may apply
+          which may impact your APR. Transaction details may impact price. Results and a rate lock do not guarantee eligibility. A loan
+          file submission is required and is subject to full due diligence. Estimated taxes and insurance are for illustration only.
+        </p>
+      </div>
+    </footer>
+  );
+}
+
+// ── Sticky actions (mobile) / floating bar (desktop) ──────────
+export function ActionBar({
+  visible,
+  option,
+  onApply,
+  onSchedule,
+}: {
+  visible: boolean;
+  option: RateOption;
+  onApply: () => void;
+  onSchedule: () => void;
+}) {
+  return (
+    <div className={`actionbar ${visible ? 'is-on' : ''}`} aria-hidden={!visible}>
+      <div className="actionbar-in">
+        <div className="actionbar-copy">
+          <b>{pct(option.rate)}</b>
+          <span>
+            {usd(option.payment)}/mo · {option.termLabel}
+          </span>
+        </div>
+        <button className="btn btn--outline btn--sm actionbar-sec" onClick={onSchedule} tabIndex={visible ? 0 : -1}>
+          <CalendarClock size={16} /> <span>Schedule a call</span>
+        </button>
+        <button className="btn btn--primary btn--sm" onClick={onApply} tabIndex={visible ? 0 : -1}>
+          Apply now <ArrowRight size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function CompareTray({
+  count,
+  onOpen,
+  onClear,
+  lifted,
+}: {
+  count: number;
+  onOpen: () => void;
+  onClear: () => void;
+  lifted: boolean;
+}) {
+  return (
+    <div className={`tray ${count > 0 ? 'is-on' : ''} ${lifted ? 'is-lifted' : ''}`} aria-hidden={count === 0}>
+      <span className="tray-count">{count}</span>
+      <span className="tray-txt">{count === 1 ? 'Pick one more to compare' : `${count} rates selected`}</span>
+      <button className="tray-clear" onClick={onClear} tabIndex={count ? 0 : -1}>
+        Clear
+      </button>
+      <button className="btn btn--light btn--sm" onClick={onOpen} disabled={count < 2} tabIndex={count ? 0 : -1}>
+        Compare
+      </button>
+    </div>
+  );
+}
