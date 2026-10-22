@@ -12,8 +12,8 @@ export const OFFICER = {
   nmls: '347720',
   email: 'team@texasunitedmortgage.com',
   phone: '346-229-1950',
-  rating: 4.82,
-  reviews: 23358,
+  rating: 4.9, // Google rating for Texas United Mortgage
+  reviews: 151,
 };
 
 export const QUOTE_ID = '59383788';
@@ -200,22 +200,36 @@ export const usd = (n: number, digits = 0) =>
 export const pct = (n: number, digits = 3) => `${n.toFixed(digits)}%`;
 export const num = (n: number) => n.toLocaleString('en-US');
 
-export const REVIEW_SOURCES = [
-  { name: 'Zillow', rating: 4.98, count: 4347 },
-  { name: 'Experience', rating: 4.86, count: 16297 },
-  { name: 'Yelp', rating: 4.7, count: 57 },
-  { name: 'Google', rating: 4.3, count: 2657 },
-];
+// Real Google reviews for Texas United Mortgage (Google Maps listing, pulled Oct 22, 2026).
+// Google only shows a short excerpt to signed-out visitors, so longer reviews end in "…".
+export const GOOGLE_REVIEWS_URL = 'https://maps.app.goo.gl/4YiicHBNwjBKKsMPA';
+export const GOOGLE_RATING = { rating: 4.9, count: 151 };
 
 export const REVIEWS = [
-  { name: 'Joe Hill', when: '22 days ago', source: 'Zillow', text: 'Made the process super easy and painless. He kept us updated and informed throughout the whole process. He even showed up to the closing to meet us in person.' },
-  { name: 'Gabriela Balderrama', when: '1 year ago', source: 'Experience', text: 'Very well organized with the portal.' },
-  { name: 'Matthew Martinez', when: '10 months ago', source: 'Experience', text: 'Everything given to me has been simple and very understanding. You were patient with me and walked me through every step and answered every question.' },
-  { name: 'Jose Maldonado Perea', when: '1 year ago', source: 'Experience', text: 'All doubts were clear and help was provided as requested. Closing date was accomplished at the promised day. Thank you!' },
-  { name: 'Alfonso Salcedo', when: '1 year ago', source: 'Experience', text: 'Made the whole process very easy for me as a first time home buyer.' },
-  { name: 'Raul Villa', when: '1 year ago', source: 'Experience', text: 'He made everything easy. All information needed was asked for at a timely manner. He was more than willing to help with any questions that we had.' },
-  { name: 'Luis Rangel Jr', when: '1 year ago', source: 'Experience', text: 'Everyone was really helpful and it made the house buying process really easy.' },
-  { name: 'Carlos Ayala', when: '1 year ago', source: 'Experience', text: 'Fast, good communication, made it easy.' },
+  {
+    name: 'Nelson Vargas',
+    when: '3 months ago',
+    text: 'Richard Haskell was an amazing loan officer. He took the time to explain every step of the home-buying process, making sure I understood everything along the way.',
+  },
+  {
+    name: 'Richie milano',
+    when: '4 months ago',
+    text: 'I had an excellent experience working with Reef throughout the home-buying process. He is knowledgeable, professional, and always available to answer my questions. He guided me through every step, explained everything clearly…',
+  },
+  {
+    name: 'Ishu Sahni',
+    when: '5 months ago',
+    text: 'Reef was incredible to work with. He was extremely prompt, responsive at all hours (day or night), and consistently offered some of the best rates I found in Texas.',
+  },
+  {
+    name: 'Coy Stephenson',
+    when: '5 months ago',
+    text: 'Working with Texas United Mortgage was an absolutely fantastic experience from start to finish. As a first time home buyer, I had a lot of questions throughout…',
+  },
 ];
+
+/** Every "Apply now" opens the loan application in a new tab. */
+export const APPLY_URL = 'https://richard.my1003app.com/register';
+export const LIMESITE_URL = 'https://www.limesite.io/';
 
 export const RATES_AS_OF = 'Oct 22, 2026 · 6:02 PM';
