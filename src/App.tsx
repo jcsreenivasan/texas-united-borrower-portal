@@ -35,7 +35,6 @@ export default function App() {
 
   const lowest = options.reduce((a, b) => (b.rate < a.rate ? b : a));
   const selected = (selectedId && all.get(selectedId)) || lowest;
-  const refOption = options.reduce((x, y) => (Math.abs(y.points) < Math.abs(x.points) ? y : x));
   const applyOption = (applyId && all.get(applyId)) || selected;
 
   useEffect(() => {
@@ -67,7 +66,7 @@ export default function App() {
           <h1>
             {greeting}, {BORROWER.first}.
           </h1>
-          <p className="muted">Here's where your home loan stands today. Adjust anything below and your rates update instantly.</p>
+          <p className="muted">Your personalized quote is ready. Compare your options, then apply or talk it through with Richard.</p>
         </div>
 
         <div className="layout">
@@ -75,7 +74,6 @@ export default function App() {
             <div ref={heroRef}>
               <Hero
                 option={selected}
-                refOption={refOption}
                 scenario={scenario}
                 isPicked={!!selectedId}
                 onApply={() => {
