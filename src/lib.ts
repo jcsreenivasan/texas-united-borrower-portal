@@ -4,15 +4,14 @@
 // Everything else is derived so the UI responds realistically.
 // ─────────────────────────────────────────────────────────────
 
-export const BORROWER = { first: 'Jimmy', last: 'King', initials: 'JK' };
+export const BORROWER = { first: 'Reef', initials: 'R' };
 
 export const OFFICER = {
-  name: 'Sasha Sams',
-  title: 'Branch Manager',
-  nmls: '320775',
-  email: 'jking1150@yahoo.com',
-  mobile: '(704) 323-1235',
-  office: '(704) 323-1235',
+  name: 'Richard Haskell',
+  title: 'Loan Officer',
+  nmls: '347720',
+  email: 'team@texasunitedmortgage.com',
+  phone: '346-229-1950',
   rating: 4.82,
   reviews: 23358,
 };
