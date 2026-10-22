@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DEFAULT_SCENARIO, Scenario, TERMS, TermId, priceRates, RateOption } from './lib';
+import { BORROWER, DEFAULT_SCENARIO, RateOption, Scenario, TERMS, TermId, priceRates } from './lib';
 import { ActionBar, CompareTray, Footer, Header, Hero, OfficerCard, RateExplorer, Reviews, SortKey } from './components/sections';
-import { ApplySheet, CompareSheet, ScenarioSheet, ScheduleSheet } from './components/sheets';
+import { CompareSheet } from './components/sheets';
 import { Toast } from './components/ui';
-import { BORROWER } from './lib';
 
-type SheetKey = 'scenario' | 'schedule' | 'apply' | 'compare' | null;
+/** "Schedule a call" intentionally does nothing yet (client to provide a booking link). */
+const scheduleCall = () => {};
 
 export default function App() {
   const [scenario, setScenario] = useState<Scenario>(DEFAULT_SCENARIO);
@@ -18,8 +18,7 @@ export default function App() {
   const [compare, setCompare] = useState<string[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
-  const [sheet, setSheet] = useState<SheetKey>(null);
-  const [applyId, setApplyId] = useState<string | null>(null);
+  const [compareOpen, setCompareOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [heroOut, setHeroOut] = useState(false);
@@ -35,7 +34,6 @@ export default function App() {
 
   const lowest = options.reduce((a, b) => (b.rate < a.rate ? b : a));
   const selected = (selectedId && all.get(selectedId)) || lowest;
-  const applyOption = (applyId && all.get(applyId)) || selected;
 
   useEffect(() => {
     const el = heroRef.current;
@@ -45,7 +43,9 @@ export default function App() {
     return () => io.disconnect();
   }, []);
 
-  const close = useCallback(() => setSheet(null), []);
+  const closeCompare = useCallback(() => setCompareOpen(false), []);
+  const clearToast = useCallback(() => setToast(null), []);
+
   const flash = (fn: () => void) => {
     setUpdating(true);
     fn();
@@ -59,7 +59,7 @@ export default function App() {
 
   return (
     <div id="top">
-      <Header onSchedule={() => setSheet('schedule')} />
+      <Header onSchedule={scheduleCall} onLogout={() => setToast('Prototype: this would sign you out.')} />
 
       <main className="wrap">
         <div className="greet">
@@ -72,24 +72,19 @@ export default function App() {
         <div className="layout">
           <div className="col-main">
             <div ref={heroRef}>
-              <Hero
-                option={selected}
-                scenario={scenario}
-                isPicked={!!selectedId}
-                onApply={() => {
-                  setApplyId(selected.id);
-                  setSheet('apply');
-                }}
-                onSchedule={() => setSheet('schedule')}
-                onEdit={() => setSheet('scenario')}
-              />
+              <Hero option={selected} scenario={scenario} isPicked={!!selectedId} onSchedule={scheduleCall} />
             </div>
 
             <RateExplorer
               scenario={scenario}
               options={options}
               term={term}
-              setTerm={(t) => flash(() => { setTerm(t); setExpanded(null); })}
+              setTerm={(t) =>
+                flash(() => {
+                  setTerm(t);
+                  setExpanded(null);
+                })
+              }
               horizon={horizon}
               setHorizon={setHorizon}
               sort={sort}
@@ -111,24 +106,20 @@ export default function App() {
               setExpanded={setExpanded}
               showAll={showAll}
               setShowAll={setShowAll}
-              onEdit={() => setSheet('scenario')}
-              onApply={(id) => {
-                setApplyId(id);
-                setSheet('apply');
+              onScenario={(s) => {
+                flash(() => {
+                  setScenario(s);
+                  setCompare([]);
+                  setExpanded(null);
+                });
+                setToast('Rates updated for your new details.');
               }}
-              onSchedule={() => setSheet('schedule')}
+              onSchedule={scheduleCall}
               updating={updating}
             />
 
             <div className="only-mobile">
-              <OfficerCard
-                uid="m"
-                onApply={() => {
-                  setApplyId(selected.id);
-                  setSheet('apply');
-                }}
-                onSchedule={() => setSheet('schedule')}
-              />
+              <OfficerCard uid="m" onSchedule={scheduleCall} />
             </div>
 
             <Reviews />
@@ -136,14 +127,7 @@ export default function App() {
 
           <aside className="col-side">
             <div className="side-sticky">
-              <OfficerCard
-                uid="d"
-                onApply={() => {
-                  setApplyId(selected.id);
-                  setSheet('apply');
-                }}
-                onSchedule={() => setSheet('schedule')}
-              />
+              <OfficerCard uid="d" onSchedule={scheduleCall} />
             </div>
           </aside>
         </div>
@@ -151,61 +135,18 @@ export default function App() {
 
       <Footer />
 
-      <CompareTray
-        count={compare.length}
-        onOpen={() => setSheet('compare')}
-        onClear={() => setCompare([])}
-        lifted={heroOut}
-      />
-      <ActionBar
-        visible={heroOut}
-        option={selected}
-        onApply={() => {
-          setApplyId(selected.id);
-          setSheet('apply');
-        }}
-        onSchedule={() => setSheet('schedule')}
-      />
+      <CompareTray count={compare.length} onOpen={() => setCompareOpen(true)} onClear={() => setCompare([])} lifted={heroOut} />
+      <ActionBar visible={heroOut} option={selected} onSchedule={scheduleCall} />
 
-      <ScenarioSheet
-        open={sheet === 'scenario'}
-        onClose={close}
-        value={scenario}
-        onApply={(s) => {
-          close();
-          flash(() => {
-            setScenario(s);
-            setCompare([]);
-            setExpanded(null);
-          });
-          setToast('Rates updated for your new details.');
-        }}
-      />
-      <ScheduleSheet open={sheet === 'schedule'} onClose={close} option={selected} />
-      <ApplySheet
-        open={sheet === 'apply'}
-        onClose={close}
-        option={applyOption}
-        scenario={scenario}
-        onStart={() => {
-          close();
-          setToast('Prototype: this would open the online application.');
-        }}
-        onSchedule={() => setSheet('schedule')}
-      />
       <CompareSheet
-        open={sheet === 'compare'}
-        onClose={close}
+        open={compareOpen}
+        onClose={closeCompare}
         options={compare.map((id) => all.get(id)!).filter(Boolean)}
         scenario={scenario}
         horizon={horizon}
-        onApply={(id) => {
-          setApplyId(id);
-          setSheet('apply');
-        }}
       />
 
-      <Toast message={toast} onDone={() => setToast(null)} />
+      <Toast message={toast} onDone={clearToast} />
     </div>
   );
 }
