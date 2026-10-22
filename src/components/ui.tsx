@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { X } from 'lucide-react';
+import { APPLY_URL } from '../lib';
 
 const reduced = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -140,9 +141,21 @@ export function Segmented<T extends string | number>({
   );
 }
 
-export function Field({ label, hint, children, htmlFor }: { label: string; hint?: ReactNode; children: ReactNode; htmlFor?: string }) {
+export function Field({
+  label,
+  hint,
+  children,
+  htmlFor,
+  wide,
+}: {
+  label: string;
+  hint?: ReactNode;
+  children: ReactNode;
+  htmlFor?: string;
+  wide?: boolean;
+}) {
   return (
-    <div className="field">
+    <div className={`field ${wide ? 'field--wide' : ''}`}>
       <label htmlFor={htmlFor}>{label}</label>
       {children}
       {hint && <span className="field-hint">{hint}</span>}
@@ -217,5 +230,14 @@ export function LoneStar({ className }: { className?: string }) {
     <svg className={className} viewBox="0 0 100 100" aria-hidden>
       <path d="M50 4l12.9 33.2 35.6 2-27.6 22.6 9.1 34.5L50 77 20 96.3l9.1-34.5L1.5 39.2l35.6-2z" />
     </svg>
+  );
+}
+
+/** Every "Apply" CTA opens the online application in a new tab. */
+export function ApplyLink({ className, children, tabIndex }: { className?: string; children: ReactNode; tabIndex?: number }) {
+  return (
+    <a className={className} href={APPLY_URL} target="_blank" rel="noopener noreferrer" tabIndex={tabIndex}>
+      {children}
+    </a>
   );
 }
