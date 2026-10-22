@@ -11,10 +11,9 @@ import {
   Pencil,
   Phone,
   ShieldCheck,
-  Smartphone,
-  TrendingDown,
 } from 'lucide-react';
 import logo from '../assets/tum-logo.png';
+import officerPhoto from '../assets/richard-haskell.jpg';
 import {
   BORROWER,
   OFFICER,
@@ -52,7 +51,7 @@ export function Header({ onSchedule }: { onSchedule: () => void }) {
           </button>
           <button className="avatar-btn" aria-label="Account menu">
             <span className="avatar">{BORROWER.initials}</span>
-            <span className="hide-sm">{BORROWER.first} {BORROWER.last[0]}.</span>
+            <span className="hide-sm">{BORROWER.first}</span>
             <ChevronDown size={16} className="hide-sm" />
           </button>
         </div>
@@ -64,7 +63,6 @@ export function Header({ onSchedule }: { onSchedule: () => void }) {
 // ── Hero: the selected rate ───────────────────────────────────
 export function Hero({
   option,
-  refOption,
   scenario,
   isPicked,
   onApply,
@@ -72,7 +70,6 @@ export function Hero({
   onEdit,
 }: {
   option: RateOption;
-  refOption: RateOption;
   scenario: Scenario;
   isPicked: boolean;
   onApply: () => void;
@@ -81,14 +78,8 @@ export function Hero({
 }) {
   const rate = useTween(option.rate);
   const pay = useTween(option.payment);
-  const est = estimates(scenario);
-  const piti = option.payment + est.tax + est.ins + est.mi;
-  const ratio = scenario.income > 0 ? piti / scenario.income : 0;
-  const ratioT = useTween(ratio * 100);
   const loan = loanAmount(scenario);
   const downPct = scenario.price ? Math.round((scenario.down / scenario.price) * 100) : 0;
-  const verdict = ratio <= 0.28 ? 'Comfortable' : ratio <= 0.36 ? 'Manageable' : 'A stretch';
-  const tone = ratio <= 0.28 ? 'good' : ratio <= 0.36 ? 'warn' : 'bad';
 
   return (
     <section className="hero" aria-labelledby="hero-title">
@@ -107,37 +98,26 @@ export function Hero({
             <span className="dot" />
             {option.termLabel}
             <span className="dot" />
-            {option.fees >= 0 ? `${option.points.toFixed(3)} pts · ${usd(option.fees)}` : `${usd(-option.fees)} lender credit`}
+            {scenario.loanType}
           </p>
-          {refOption.payment - option.payment >= 1 && (
-            <p className="hero-save">
-              <TrendingDown size={16} aria-hidden />
-              <span>
-                Saves <b>{usd(refOption.payment - option.payment)}/mo</b> vs. the {pct(refOption.rate)} low-cost option
-                {breakEven(option, refOption) ? `, paying back its upfront cost in about ${(breakEven(option, refOption)! / 12).toFixed(1)} years.` : '.'}
-              </span>
-            </p>
-          )}
         </div>
 
         <div className="hero-pay">
           <p className="eyebrow eyebrow--light">Monthly payment</p>
           <p className="hero-pay-num">{usd(pay)}</p>
           <p className="hero-pay-sub">Principal &amp; interest</p>
-          <div className={`afford afford--${tone}`}>
-            <div className="afford-row">
-              <span>Housing cost vs. income</span>
-              <strong>{Math.round(ratioT)}%</strong>
+          <dl className="hero-pay-list">
+            <div>
+              <dt>{option.fees >= 0 ? 'Points at closing' : 'Lender credit'}</dt>
+              <dd>
+                {option.fees >= 0 ? `${usd(option.fees)} · ${option.points.toFixed(3)} pts` : usd(-option.fees)}
+              </dd>
             </div>
-            <div className="afford-meter" aria-hidden>
-              <span style={{ width: `${Math.min(100, (ratioT / 50) * 100)}%` }} />
-              <i style={{ left: `${(28 / 50) * 100}%` }} />
-              <i style={{ left: `${(36 / 50) * 100}%` }} />
+            <div>
+              <dt>Rates as of</dt>
+              <dd>{RATES_AS_OF}</dd>
             </div>
-            <p className="afford-note">
-              <b>{verdict}.</b> {usd(piti)}/mo with est. taxes &amp; insurance on {usd(scenario.income)}/mo income.
-            </p>
-          </div>
+          </dl>
         </div>
       </div>
 
@@ -486,9 +466,9 @@ export function OfficerCard({ onApply, onSchedule, uid }: { onApply: () => void;
   return (
     <section className="panel officer" aria-labelledby={`lo-title-${uid}`}>
       <div className="officer-top">
-        <div className="officer-photo" aria-hidden>
-          SS
-          <span className="officer-online" />
+        <div className="officer-photo">
+          <img src={officerPhoto} alt={OFFICER.name} width={64} height={64} />
+          <span className="officer-online" aria-hidden />
         </div>
         <div className="officer-id">
           <p className="eyebrow">Your loan officer</p>
@@ -505,14 +485,9 @@ export function OfficerCard({ onApply, onSchedule, uid }: { onApply: () => void;
       </a>
       <ul className="contact">
         <li>
-          <Smartphone size={16} aria-hidden />
-          <span>Mobile</span>
-          <a href={`tel:${OFFICER.mobile.replace(/\D/g, '')}`}>{OFFICER.mobile}</a>
-        </li>
-        <li>
           <Phone size={16} aria-hidden />
-          <span>Office</span>
-          <a href={`tel:${OFFICER.office.replace(/\D/g, '')}`}>{OFFICER.office}</a>
+          <span>Phone</span>
+          <a href={`tel:${OFFICER.phone.replace(/\D/g, '')}`}>{OFFICER.phone}</a>
         </li>
         <li>
           <Mail size={16} aria-hidden />
