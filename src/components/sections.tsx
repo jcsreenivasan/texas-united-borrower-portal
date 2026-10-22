@@ -1,26 +1,29 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowRight,
-  BadgeCheck,
   CalendarClock,
   Check,
   ChevronDown,
   Clock3,
+  ExternalLink,
+  LogOut,
   Mail,
-  MapPin,
   Pencil,
   Phone,
   ShieldCheck,
 } from 'lucide-react';
 import logo from '../assets/tum-logo.png';
 import officerPhoto from '../assets/richard-haskell.jpg';
+import equalHousing from '../assets/equal-housing.png';
 import {
   BORROWER,
   OFFICER,
   QUOTE_ID,
   RATES_AS_OF,
+  GOOGLE_RATING,
+  GOOGLE_REVIEWS_URL,
+  LIMESITE_URL,
   REVIEWS,
-  REVIEW_SOURCES,
   RateOption,
   Scenario,
   TERMS,
@@ -34,10 +37,25 @@ import {
   usd,
   zipInfo,
 } from '../lib';
-import { LoneStar, Segmented, Stars, Toggle, useTween } from './ui';
+import { ApplyLink, LoneStar, Segmented, Stars, Toggle, useTween } from './ui';
+import { ScenarioForm } from './sheets';
 
 // ── Header ────────────────────────────────────────────────────
-export function Header({ onSchedule }: { onSchedule: () => void }) {
+export function Header({ onSchedule, onLogout }: { onSchedule: () => void; onLogout: () => void }) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => !menuRef.current?.contains(e.target as Node) && setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', onDoc);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
   return (
     <header className="topbar">
       <div className="topbar-in">
@@ -49,11 +67,40 @@ export function Header({ onSchedule }: { onSchedule: () => void }) {
           <button className="btn btn--ghost btn--sm hide-sm" onClick={onSchedule}>
             <CalendarClock size={16} /> Schedule a call
           </button>
-          <button className="avatar-btn" aria-label="Account menu">
-            <span className="avatar">{BORROWER.initials}</span>
-            <span className="hide-sm">{BORROWER.first}</span>
-            <ChevronDown size={16} className="hide-sm" />
-          </button>
+          <div className="account" ref={menuRef}>
+            <button
+              className="avatar-btn"
+              aria-label="Account menu"
+              aria-haspopup="menu"
+              aria-expanded={open}
+              onClick={() => setOpen((o) => !o)}
+            >
+              <span className="avatar">{BORROWER.initials}</span>
+              <span className="hide-sm">{BORROWER.first}</span>
+              <ChevronDown size={16} className={`hide-sm chev-sm ${open ? 'flip' : ''}`} />
+            </button>
+            {open && (
+              <div className="menu" role="menu">
+                <div className="menu-head">
+                  <span className="avatar">{BORROWER.initials}</span>
+                  <span>
+                    <b>{BORROWER.first}</b>
+                    <small>Borrower portal</small>
+                  </span>
+                </div>
+                <button
+                  role="menuitem"
+                  className="menu-item"
+                  onClick={() => {
+                    setOpen(false);
+                    onLogout();
+                  }}
+                >
+                  <LogOut size={16} /> Log out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>
@@ -65,16 +112,12 @@ export function Hero({
   option,
   scenario,
   isPicked,
-  onApply,
   onSchedule,
-  onEdit,
 }: {
   option: RateOption;
   scenario: Scenario;
   isPicked: boolean;
-  onApply: () => void;
   onSchedule: () => void;
-  onEdit: () => void;
 }) {
   const rate = useTween(option.rate);
   const pay = useTween(option.payment);
@@ -145,48 +188,17 @@ export function Hero({
       </dl>
 
       <div className="hero-actions">
-        <button className="btn btn--primary btn--lg" onClick={onApply}>
+        <ApplyLink className="btn btn--primary btn--lg">
           Apply now <ArrowRight size={18} />
-        </button>
+        </ApplyLink>
         <button className="btn btn--onDark btn--lg" onClick={onSchedule}>
           <CalendarClock size={18} /> Schedule a call
         </button>
-        <button className="link-light" onClick={onEdit}>
+        <a className="link-light" href="#details">
           <Pencil size={14} /> Edit my details
-        </button>
+        </a>
       </div>
     </section>
-  );
-}
-
-// ── Scenario summary ──────────────────────────────────────────
-export function ScenarioBar({ s, onEdit }: { s: Scenario; onEdit: () => void }) {
-  const z = zipInfo(s.zip);
-  const chips = [
-    s.purpose,
-    z ? `${z.city} ${s.zip}` : s.zip,
-    `${usd(s.price)} ${s.purpose === 'Purchase' ? 'price' : 'value'}`,
-    s.purpose === 'Purchase' ? `${usd(s.down)} down` : `${usd(loanAmount(s))} balance`,
-    `${s.credit} credit`,
-    s.propertyType,
-    s.occupancy,
-    s.loanType,
-    ...(s.firstTime && s.purpose === 'Purchase' ? ['First-time buyer'] : []),
-  ];
-  return (
-    <div className="scenario">
-      <div className="scenario-chips" aria-label="Your loan details">
-        <MapPin size={15} className="scenario-ic" aria-hidden />
-        {chips.map((c) => (
-          <span className="chip" key={c}>
-            {c}
-          </span>
-        ))}
-      </div>
-      <button className="btn btn--soft btn--sm" onClick={onEdit}>
-        <Pencil size={14} /> Edit details
-      </button>
-    </div>
   );
 }
 
@@ -214,8 +226,7 @@ export function RateExplorer(props: {
   setExpanded: (id: string | null) => void;
   showAll: boolean;
   setShowAll: (b: boolean) => void;
-  onEdit: () => void;
-  onApply: (id: string) => void;
+  onScenario: (s: Scenario) => void;
   onSchedule: () => void;
   updating: boolean;
 }) {
@@ -254,7 +265,7 @@ export function RateExplorer(props: {
         </div>
       </div>
 
-      <ScenarioBar s={scenario} onEdit={props.onEdit} />
+      <ScenarioForm value={scenario} onApply={props.onScenario} />
 
       <div className="term-scroll">
         <Segmented
@@ -425,9 +436,9 @@ export function RateExplorer(props: {
                     <button className="btn btn--outline btn--sm" onClick={() => props.onSelect(o.id)} disabled={isSel}>
                       {isSel ? <><Check size={15} /> Selected</> : 'Select this rate'}
                     </button>
-                    <button className="btn btn--primary btn--sm" onClick={() => props.onApply(o.id)}>
+                    <ApplyLink className="btn btn--primary btn--sm">
                       Apply with this rate <ArrowRight size={15} />
-                    </button>
+                    </ApplyLink>
                   </div>
                 </div>
               </li>
@@ -462,7 +473,7 @@ export function RateExplorer(props: {
 }
 
 // ── Loan officer ──────────────────────────────────────────────
-export function OfficerCard({ onApply, onSchedule, uid }: { onApply: () => void; onSchedule: () => void; uid: string }) {
+export function OfficerCard({ onSchedule, uid }: { onSchedule: () => void; uid: string }) {
   return (
     <section className="panel officer" aria-labelledby={`lo-title-${uid}`}>
       <div className="officer-top">
@@ -480,8 +491,8 @@ export function OfficerCard({ onApply, onSchedule, uid }: { onApply: () => void;
       </div>
       <a href="#reviews" className="officer-rating">
         <Stars value={OFFICER.rating} />
-        <b>{OFFICER.rating}</b>
-        <span>({num(OFFICER.reviews)} reviews)</span>
+        <b>{OFFICER.rating.toFixed(1)}</b>
+        <span>({num(OFFICER.reviews)} Google reviews)</span>
       </a>
       <ul className="contact">
         <li>
@@ -496,9 +507,9 @@ export function OfficerCard({ onApply, onSchedule, uid }: { onApply: () => void;
         </li>
       </ul>
       <div className="officer-cta">
-        <button className="btn btn--primary btn--block" onClick={onApply}>
+        <ApplyLink className="btn btn--primary btn--block">
           Apply now <ArrowRight size={17} />
-        </button>
+        </ApplyLink>
         <button className="btn btn--outline btn--block" onClick={onSchedule}>
           <CalendarClock size={16} /> Schedule a call
         </button>
@@ -512,33 +523,26 @@ export function OfficerCard({ onApply, onSchedule, uid }: { onApply: () => void;
 
 // ── Reviews ───────────────────────────────────────────────────
 export function Reviews() {
-  const max = Math.max(...REVIEW_SOURCES.map((s) => s.count));
   return (
     <section className="panel reviews" id="reviews" aria-labelledby="rev-title">
       <div className="reviews-grid">
         <div className="reviews-summary">
           <h2 id="rev-title" className="h2">What borrowers say</h2>
+          <p className="g-source">
+            <span className="g-pill">Google</span> Texas United Mortgage · Spring, TX
+          </p>
           <div className="score">
-            <span className="score-num">{OFFICER.rating.toFixed(2)}</span>
+            <span className="score-num">{GOOGLE_RATING.rating.toFixed(1)}</span>
             <div>
-              <Stars value={OFFICER.rating} size={18} />
-              <p className="muted small">{num(OFFICER.reviews)} verified reviews</p>
+              <Stars value={GOOGLE_RATING.rating} size={18} />
+              <p className="muted small">{num(GOOGLE_RATING.count)} Google reviews</p>
             </div>
           </div>
-          <ul className="sources">
-            {REVIEW_SOURCES.map((s) => (
-              <li key={s.name}>
-                <span className="src-name">{s.name}</span>
-                <span className="src-bar" aria-hidden>
-                  <span style={{ width: `${Math.max(3, (s.count / max) * 100)}%` }} />
-                </span>
-                <span className="src-rating">{s.rating.toFixed(2)}</span>
-                <span className="src-count">{num(s.count)}</span>
-              </li>
-            ))}
-          </ul>
+          <a className="btn btn--outline btn--sm" href={GOOGLE_REVIEWS_URL} target="_blank" rel="noopener noreferrer">
+            Read all reviews on Google <ExternalLink size={14} />
+          </a>
         </div>
-        <div className="reviews-track" tabIndex={0} aria-label="Recent reviews">
+        <div className="reviews-track" tabIndex={0} aria-label="Recent Google reviews">
           {REVIEWS.map((r) => (
             <figure className="review" key={r.name}>
               <Stars value={5} size={13} />
@@ -547,17 +551,14 @@ export function Reviews() {
                 <span className="rv-avatar" aria-hidden>
                   {r.name
                     .split(' ')
-                    .map((p) => p[0])
+                    .map((p) => p[0].toUpperCase())
                     .slice(0, 2)
                     .join('')}
                 </span>
                 <span>
                   <b>{r.name}</b>
-                  <span className="muted small">
-                    {r.when} · {r.source}
-                  </span>
+                  <span className="muted small">{r.when} · Google</span>
                 </span>
-                <BadgeCheck size={16} className="rv-check" aria-label="Verified" />
               </figcaption>
             </figure>
           ))}
@@ -573,19 +574,21 @@ export function Footer() {
     <footer className="foot">
       <div className="foot-in">
         <div className="foot-brand">
-          <img src={logo} alt="Texas United Mortgage" />
-          <span className="eho">
-            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
-              <path d="M12 3 2 10h2v10h16V10h2L12 3Zm4 13H8v-2h8v2Zm0-4H8v-2h8v2Z" fill="currentColor" />
-            </svg>
-            Equal Housing Opportunity
-          </span>
+          <img src={logo} alt="Texas United Mortgage" className="foot-logo" />
+          <img src={equalHousing} alt="Equal Housing Opportunity" className="eho" width={49} height={52} />
         </div>
         <p className="foot-legal">
-          Prototype for demonstration. Rates and reviews shown are sample data and are not an offer to lend. Additional fees may apply
-          which may impact your APR. Transaction details may impact price. Results and a rate lock do not guarantee eligibility. A loan
-          file submission is required and is subject to full due diligence. Estimated taxes and insurance are for illustration only.
+          Prototype for demonstration. Rates shown are sample data and are not an offer to lend. Additional fees may apply which may
+          impact your APR. Transaction details may impact price. Results and a rate lock do not guarantee eligibility. A loan file
+          submission is required and is subject to full due diligence. Estimated taxes and insurance are for illustration only.
         </p>
+        <a className="made-with" href={LIMESITE_URL} target="_blank" rel="noopener noreferrer">
+          <span className="mw-dot" aria-hidden />
+          <span>
+            Made with <b>Limesite.io</b>
+          </span>
+          <ArrowRight size={14} className="mw-arrow" aria-hidden />
+        </a>
       </div>
     </footer>
   );
@@ -595,12 +598,10 @@ export function Footer() {
 export function ActionBar({
   visible,
   option,
-  onApply,
   onSchedule,
 }: {
   visible: boolean;
   option: RateOption;
-  onApply: () => void;
   onSchedule: () => void;
 }) {
   return (
@@ -615,9 +616,9 @@ export function ActionBar({
         <button className="btn btn--outline btn--sm actionbar-sec" onClick={onSchedule} tabIndex={visible ? 0 : -1}>
           <CalendarClock size={16} /> <span>Schedule a call</span>
         </button>
-        <button className="btn btn--primary btn--sm" onClick={onApply} tabIndex={visible ? 0 : -1}>
+        <ApplyLink className="btn btn--primary btn--sm" tabIndex={visible ? 0 : -1}>
           Apply now <ArrowRight size={16} />
-        </button>
+        </ApplyLink>
       </div>
     </div>
   );
