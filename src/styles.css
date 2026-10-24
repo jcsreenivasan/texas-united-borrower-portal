@@ -1559,8 +1559,22 @@ a {
   color: var(--ink-3);
   pointer-events: none;
 }
+.input-affix--r {
+  left: auto;
+  right: 12px;
+}
 .input--affix {
   padding-left: 28px;
+}
+.down-row {
+  display: grid;
+  grid-template-columns: 1fr 76px;
+  gap: 8px;
+}
+.input--pct {
+  padding-left: 10px;
+  padding-right: 28px;
+  text-align: right;
 }
 .select-wrap {
   position: relative;
@@ -1588,13 +1602,6 @@ a {
   flex: 1;
   justify-content: center;
 }
-.quick-down {
-  display: flex;
-  gap: 6px;
-  margin-top: -8px;
-  flex-wrap: wrap;
-}
-.quick-down button,
 .topics button {
   height: 32px;
   padding: 0 12px;
@@ -1607,11 +1614,9 @@ a {
   align-items: center;
   gap: 6px;
 }
-.quick-down button:hover,
 .topics button:hover {
   border-color: var(--line-strong);
 }
-.quick-down button.is-on,
 .topics button.is-on {
   background: var(--soft);
   border-color: var(--navy);
@@ -2362,14 +2367,6 @@ a {
 }
 .form--inline .seg {
   background: var(--soft);
-}
-.form--inline .quick-down {
-  margin-top: 2px;
-}
-.form--inline .quick-down button {
-  height: 26px;
-  padding: 0 9px;
-  font-size: 12px;
 }
 .form--inline .form-toggle,
 .details-actions {

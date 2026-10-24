@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Clock3, RefreshCw } from 'lucide-react';
 import {
   CREDIT_SCORES,
@@ -18,9 +18,18 @@ import { ApplyLink, Field, MoneyInput, Segmented, Sheet, Toggle } from './ui';
 // ── Loan details (always visible, applied with "Update rates") ─
 export function ScenarioForm({ value, onApply }: { value: Scenario; onApply: (s: Scenario) => void }) {
   const [s, setS] = useState(value);
+  const [pctStr, setPctStr] = useState(() => {
+    const dp = value.price ? (value.down / value.price) * 100 : 0;
+    return dp.toFixed(1);
+  });
+  const editingPct = useRef(false);
   useEffect(() => setS(value), [value]);
   const set = <K extends keyof Scenario>(k: K, v: Scenario[K]) => setS((p) => ({ ...p, [k]: v }));
   const downPct = s.price ? (s.down / s.price) * 100 : 0;
+  // Keep pctStr in sync when dollar input or external reset changes downPct
+  useEffect(() => {
+    if (!editingPct.current) setPctStr(downPct.toFixed(1));
+  }, [downPct]);
   const isPurchase = s.purpose === 'Purchase';
   const loan = loanAmount(s);
   const valid = s.price > 0 && loan > 0 && s.zip.length === 5;
@@ -65,19 +74,26 @@ export function ScenarioForm({ value, onApply }: { value: Scenario; onApply: (s:
             <MoneyInput id="f-price" value={s.price} onChange={(n) => setS((p) => ({ ...p, price: n, down: Math.min(p.down, n) }))} />
           </Field>
           {isPurchase ? (
-            <Field label="Down payment" htmlFor="f-down" hint={`${downPct.toFixed(1)}% of price`}>
-              <MoneyInput id="f-down" value={s.down} onChange={(n) => set('down', Math.min(n, s.price))} />
-              <div className="quick-down" role="group" aria-label="Quick down payment">
-                {[3.5, 5, 10, 20].map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    className={Math.abs(downPct - p) < 0.05 ? 'is-on' : ''}
-                    onClick={() => set('down', Math.round((s.price * p) / 100))}
-                  >
-                    {p}%
-                  </button>
-                ))}
+            <Field label="Down payment" htmlFor="f-down">
+              <div className="down-row">
+                <MoneyInput id="f-down" value={s.down} onChange={(n) => set('down', Math.min(n, s.price))} />
+                <div className="input-wrap">
+                  <input
+                    className="input input--pct"
+                    inputMode="decimal"
+                    aria-label="Down payment percent"
+                    value={pctStr}
+                    onFocus={() => { editingPct.current = true; }}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/[^0-9.]/g, '');
+                      setPctStr(raw);
+                      const p = parseFloat(raw);
+                      if (!isNaN(p) && s.price > 0) set('down', Math.min(Math.round((s.price * p) / 100), s.price));
+                    }}
+                    onBlur={() => { editingPct.current = false; setPctStr(downPct.toFixed(1)); }}
+                  />
+                  <span className="input-affix input-affix--r" aria-hidden>%</span>
+                </div>
               </div>
             </Field>
           ) : (
@@ -100,7 +116,7 @@ export function ScenarioForm({ value, onApply }: { value: Scenario; onApply: (s:
               </select>
             </div>
           </Field>
-          <Field label="Monthly income" htmlFor="f-inc" hint="Before taxes">
+          <Field label="Monthly income" htmlFor="f-inc">
             <MoneyInput id="f-inc" value={s.income} onChange={(n) => set('income', n)} />
           </Field>
         </div>
