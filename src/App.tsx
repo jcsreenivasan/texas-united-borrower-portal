@@ -114,8 +114,6 @@ export default function App() {
             <div className="only-mobile">
               <OfficerCard uid="m" />
             </div>
-
-            <Reviews />
           </div>
 
           <aside className="col-side">
@@ -124,6 +122,8 @@ export default function App() {
             </div>
           </aside>
         </div>
+
+        <Reviews />
       </main>
 
       <Footer />

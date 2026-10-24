@@ -1174,6 +1174,9 @@ a {
 }
 
 /* ── Reviews ─────────────────────────────────────────────── */
+.reviews {
+  margin-top: 24px;
+}
 .reviews-grid {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);

@@ -131,6 +131,15 @@ export function ScenarioForm({ value, onApply }: { value: Scenario; onApply: (s:
               ))}
             </select>
           </div>
+          {isPurchase && s.loanType === 'VA' && (
+            <Segmented
+              label="VA loan use"
+              value={s.vaUsage}
+              onChange={(v: VaUsage) => set('vaUsage', v)}
+              size="sm"
+              options={VA_USAGE.map((u) => ({ value: u, label: u }))}
+            />
+          )}
         </Field>
 
         <div className="form-row">
@@ -157,19 +166,6 @@ export function ScenarioForm({ value, onApply }: { value: Scenario; onApply: (s:
         {isPurchase && s.loanType === 'Conventional' && (
           <div className="form-toggle">
             <Toggle id="f-first" checked={s.firstTime} onChange={(b) => set('firstTime', b)} label="I'm a first-time home buyer" />
-          </div>
-        )}
-        {isPurchase && s.loanType === 'VA' && (
-          <div className="form-toggle">
-            <Field label="VA loan use">
-              <Segmented
-                label="VA loan use"
-                value={s.vaUsage}
-                onChange={(v: VaUsage) => set('vaUsage', v)}
-                size="sm"
-                options={VA_USAGE.map((u) => ({ value: u, label: u }))}
-              />
-            </Field>
           </div>
         )}
 
