@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Clock3, RefreshCw } from 'lucide-react';
 import {
   CREDIT_SCORES,
-  DEFAULT_SCENARIO,
   LOAN_TYPES,
   LoanType,
   OCCUPANCY,
@@ -13,7 +12,6 @@ import {
   loanAmount,
   pct,
   usd,
-  zipInfo,
 } from '../lib';
 import { ApplyLink, Field, MoneyInput, Segmented, Sheet, Toggle } from './ui';
 
@@ -23,7 +21,6 @@ export function ScenarioForm({ value, onApply }: { value: Scenario; onApply: (s:
   useEffect(() => setS(value), [value]);
   const set = <K extends keyof Scenario>(k: K, v: Scenario[K]) => setS((p) => ({ ...p, [k]: v }));
   const downPct = s.price ? (s.down / s.price) * 100 : 0;
-  const z = zipInfo(s.zip);
   const isPurchase = s.purpose === 'Purchase';
   const loan = loanAmount(s);
   const valid = s.price > 0 && loan > 0 && s.zip.length === 5;
@@ -52,7 +49,7 @@ export function ScenarioForm({ value, onApply }: { value: Scenario; onApply: (s:
           />
         </Field>
 
-        <Field label="ZIP code" htmlFor="f-zip" hint={z ? z.city : s.zip.length ? 'Enter a 5-digit ZIP' : 'Where is the property?'}>
+        <Field label="ZIP code" htmlFor="f-zip">
           <input
             id="f-zip"
             className="input"
@@ -108,8 +105,14 @@ export function ScenarioForm({ value, onApply }: { value: Scenario; onApply: (s:
           </Field>
         </div>
 
-        <Field label="Loan type" wide>
-          <Segmented label="Loan type" value={s.loanType} onChange={(v: LoanType) => set('loanType', v)} options={LOAN_TYPES.map((t) => ({ value: t, label: t }))} />
+        <Field label="Loan type" htmlFor="f-loan">
+          <div className="select-wrap">
+            <select id="f-loan" className="input" value={s.loanType} onChange={(e) => set('loanType', e.target.value as LoanType)}>
+              {LOAN_TYPES.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
         </Field>
 
         <div className="form-row">
@@ -145,9 +148,6 @@ export function ScenarioForm({ value, onApply }: { value: Scenario; onApply: (s:
             <b>{usd(loan)}</b>
           </div>
           {dirty && <span className="details-pending">Changes not applied yet</span>}
-          <button type="button" className="btn btn--ghost" onClick={() => setS(DEFAULT_SCENARIO)}>
-            Reset
-          </button>
           <button type="submit" className="btn btn--navy" disabled={!valid || !dirty}>
             <RefreshCw size={16} /> Update rates
           </button>

@@ -356,7 +356,7 @@ export function RateExplorer(props: {
                     )}
                   </button>
                   <div className="rate-actions">
-                    <button type="button" className="btn btn--primary btn--sm rate-le-btn">
+                    <button type="button" className="btn btn--soft btn--sm rate-le-btn">
                       <Download size={14} /> Loan Estimate
                     </button>
                     <div className="rate-actions-end">
@@ -372,7 +372,6 @@ export function RateExplorer(props: {
                         </span>
                         <span className="cmp-txt">Compare</span>
                       </label>
-                      <ChevronDown size={18} className="chev" aria-hidden />
                     </div>
                   </div>
                 </div>
@@ -557,11 +556,7 @@ export function Footer() {
           submission is required and is subject to full due diligence. Estimated taxes and insurance are for illustration only.
         </p>
         <a className="made-with" href={LIMESITE_URL} target="_blank" rel="noopener noreferrer">
-          <span className="mw-dot" aria-hidden />
-          <span>
-            Made with <b>Limesite.io</b>
-          </span>
-          <ArrowRight size={14} className="mw-arrow" aria-hidden />
+          Made with <span className="made-heart" aria-hidden>❤️</span> <b>Limesite.io</b>
         </a>
       </div>
     </footer>

@@ -41,7 +41,7 @@ const BASE: [number, number, number][] = [
   [8.0, -2.0, 8.0],
 ];
 
-export type LoanType = 'Conventional' | 'FHA' | 'VA';
+export type LoanType = 'Conventional' | 'FHA' | 'VA' | 'USDA' | 'ARM';
 export type Purpose = 'Purchase' | 'Refinance';
 
 export interface Scenario {
@@ -72,7 +72,7 @@ export const DEFAULT_SCENARIO: Scenario = {
 
 export const PROPERTY_TYPES = ['Single Family Home', 'Townhome', 'Condo', '2–4 Unit'];
 export const OCCUPANCY = ['Primary Home', 'Second Home', 'Investment'];
-export const LOAN_TYPES: LoanType[] = ['Conventional', 'FHA', 'VA'];
+export const LOAN_TYPES: LoanType[] = ['Conventional', 'VA', 'FHA', 'USDA', 'ARM'];
 export const CREDIT_SCORES = [800, 780, 760, 740, 720, 700, 680, 660, 640, 620];
 
 export const ZIPS: Record<string, { city: string; tax: number; ins: number }> = {
