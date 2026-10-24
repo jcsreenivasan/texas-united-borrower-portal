@@ -43,6 +43,8 @@ const BASE: [number, number, number][] = [
 
 export type LoanType = 'Conventional' | 'FHA' | 'VA' | 'USDA' | 'ARM';
 export type Purpose = 'Purchase' | 'Refinance';
+export type VaUsage = '1st' | '2nd' | 'Exempt';
+export const VA_USAGE: VaUsage[] = ['1st', '2nd', 'Exempt'];
 
 export interface Scenario {
   purpose: Purpose;
@@ -55,6 +57,7 @@ export interface Scenario {
   loanType: LoanType;
   income: number;
   firstTime: boolean;
+  vaUsage: VaUsage;
 }
 
 export const DEFAULT_SCENARIO: Scenario = {
@@ -68,6 +71,7 @@ export const DEFAULT_SCENARIO: Scenario = {
   loanType: 'Conventional',
   income: 12000,
   firstTime: true,
+  vaUsage: '1st',
 };
 
 export const PROPERTY_TYPES = ['Single Family Home', 'Townhome', 'Condo', '2–4 Unit'];
