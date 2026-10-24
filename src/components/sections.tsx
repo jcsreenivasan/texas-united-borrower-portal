@@ -5,6 +5,7 @@ import {
   Check,
   ChevronDown,
   Clock3,
+  Download,
   ExternalLink,
   LogOut,
   Mail,
@@ -29,7 +30,6 @@ import {
   TERMS,
   TermId,
   breakEven,
-  costOver,
   estimates,
   loanAmount,
   num,
@@ -41,7 +41,7 @@ import { ApplyLink, LoneStar, Segmented, Stars, Toggle, useTween } from './ui';
 import { ScenarioForm } from './sheets';
 
 // ── Header ────────────────────────────────────────────────────
-export function Header({ onSchedule, onLogout }: { onSchedule: () => void; onLogout: () => void }) {
+export function Header({ onLogout }: { onLogout: () => void }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -64,9 +64,9 @@ export function Header({ onSchedule, onLogout }: { onSchedule: () => void; onLog
         </a>
         <span className="topbar-label">Borrower portal</span>
         <div className="topbar-right">
-          <button className="btn btn--ghost btn--sm hide-sm" onClick={onSchedule}>
+          <a href="#" className="btn btn--ghost btn--sm hide-sm">
             <CalendarClock size={16} /> Schedule a call
-          </button>
+          </a>
           <div className="account" ref={menuRef}>
             <button
               className="avatar-btn"
@@ -112,12 +112,10 @@ export function Hero({
   option,
   scenario,
   isPicked,
-  onSchedule,
 }: {
   option: RateOption;
   scenario: Scenario;
   isPicked: boolean;
-  onSchedule: () => void;
 }) {
   const rate = useTween(option.rate);
   const pay = useTween(option.payment);
@@ -191,9 +189,9 @@ export function Hero({
         <ApplyLink className="btn btn--primary btn--lg">
           Apply now <ArrowRight size={18} />
         </ApplyLink>
-        <button className="btn btn--onDark btn--lg" onClick={onSchedule}>
+        <a href="#" className="btn btn--onDark btn--lg">
           <CalendarClock size={18} /> Schedule a call
-        </button>
+        </a>
         <a className="link-light" href="#details">
           <Pencil size={14} /> Edit my details
         </a>
@@ -203,15 +201,13 @@ export function Hero({
 }
 
 // ── Rate explorer ─────────────────────────────────────────────
-export type SortKey = 'rate' | 'upfront' | 'value';
+export type SortKey = 'rate' | 'apr' | 'payment' | 'upfront';
 
 export function RateExplorer(props: {
   scenario: Scenario;
   options: RateOption[];
   term: TermId;
   setTerm: (t: TermId) => void;
-  horizon: number;
-  setHorizon: (n: number) => void;
   sort: SortKey;
   setSort: (s: SortKey) => void;
   waive: boolean;
@@ -227,30 +223,27 @@ export function RateExplorer(props: {
   showAll: boolean;
   setShowAll: (b: boolean) => void;
   onScenario: (s: Scenario) => void;
-  onSchedule: () => void;
   updating: boolean;
 }) {
-  const { scenario, options, horizon, sort, showTotal } = props;
-  const loan = loanAmount(scenario);
+  const { scenario, options, sort, showTotal } = props;
   const est = estimates(scenario);
   const extra = est.tax + est.ins + est.mi;
 
   const meta = useMemo(() => {
-    const costs = new Map(options.map((o) => [o.id, costOver(o, loan, horizon)]));
     const lowestRate = options.reduce((a, b) => (b.rate < a.rate ? b : a));
-    const bestValue = options.reduce((a, b) => (costs.get(b.id)! < costs.get(a.id)! ? b : a));
     const lowestUpfront = options.reduce((a, b) => (b.fees < a.fees ? b : a));
     const ref = options.reduce((a, b) => (Math.abs(b.points) < Math.abs(a.points) ? b : a));
-    return { costs, lowestRate, bestValue, lowestUpfront, ref };
-  }, [options, loan, horizon]);
+    return { lowestRate, lowestUpfront, ref };
+  }, [options]);
 
   const sorted = useMemo(() => {
     const list = [...options];
     if (sort === 'rate') list.sort((a, b) => a.rate - b.rate);
+    if (sort === 'apr') list.sort((a, b) => a.apr - b.apr);
+    if (sort === 'payment') list.sort((a, b) => a.payment - b.payment);
     if (sort === 'upfront') list.sort((a, b) => a.fees - b.fees);
-    if (sort === 'value') list.sort((a, b) => meta.costs.get(a.id)! - meta.costs.get(b.id)!);
     return list;
-  }, [options, sort, meta]);
+  }, [options, sort]);
 
   const visible = props.showAll ? sorted : sorted.slice(0, 5);
 
@@ -276,22 +269,6 @@ export function RateExplorer(props: {
         />
       </div>
 
-      <div className="horizon">
-        <div className="horizon-copy">
-          <p className="horizon-q">How long do you plan to keep this loan?</p>
-          <p className="muted small">
-            Paying points lowers your rate but costs more today. We'll flag the option with the lowest total cost for your timeline.
-          </p>
-        </div>
-        <Segmented
-          label="Years you plan to keep the loan"
-          size="sm"
-          value={horizon}
-          onChange={props.setHorizon}
-          options={[3, 5, 7, 10].map((y) => ({ value: y, label: `${y} yrs` }))}
-        />
-      </div>
-
       <div className="list-tools">
         <div className="list-toggles">
           <Toggle id="waive" checked={props.waive} onChange={props.setWaive} label="Waive escrows" />
@@ -300,9 +277,10 @@ export function RateExplorer(props: {
         <label className="sort">
           <span>Sort</span>
           <select id="sort" value={sort} onChange={(e) => props.setSort(e.target.value as SortKey)}>
-            <option value="rate">Lowest rate</option>
-            <option value="upfront">Lowest upfront cost</option>
-            <option value="value">Best value for {horizon} yrs</option>
+            <option value="rate">Low Rate</option>
+            <option value="apr">Low APR</option>
+            <option value="payment">Low Monthly Payment</option>
+            <option value="upfront">Low Upfront Costs</option>
           </select>
           <ChevronDown size={14} aria-hidden />
         </label>
@@ -313,14 +291,12 @@ export function RateExplorer(props: {
           <span>Rate / APR</span>
           <span>Upfront</span>
           <span>{showTotal ? 'Total monthly' : 'Monthly P&I'}</span>
-          <span>Cost over {horizon} yrs</span>
           <span />
         </div>
         <ul className="rate-list">
           {visible.map((o) => {
             const tags: { label: string; tone: string }[] = [];
             if (o.id === meta.lowestRate.id) tags.push({ label: 'Lowest rate', tone: 'navy' });
-            if (o.id === meta.bestValue.id) tags.push({ label: `Best value · ${horizon} yrs`, tone: 'green' });
             if (o.id === meta.lowestUpfront.id) tags.push({ label: 'Lowest closing cost', tone: 'slate' });
             const isOpen = props.expanded === o.id;
             const isSel = props.selectedId === o.id;
@@ -364,10 +340,6 @@ export function RateExplorer(props: {
                         <small>/mo</small>
                       </span>
                     </span>
-                    <span className="rate-cell rate-cell--cost">
-                      <span className="cell-label">{horizon}-yr cost</span>
-                      <span className="v v--muted">{usd(meta.costs.get(o.id)!)}</span>
-                    </span>
                     {(tags.length > 0 || isSel) && (
                       <span className="rate-tags">
                         {isSel && (
@@ -384,19 +356,24 @@ export function RateExplorer(props: {
                     )}
                   </button>
                   <div className="rate-actions">
-                    <label className={`cmp ${inCompare ? 'is-on' : ''}`}>
-                      <input
-                        type="checkbox"
-                        checked={inCompare}
-                        onChange={() => props.toggleCompare(o.id)}
-                        aria-label={`Compare ${pct(o.rate)}`}
-                      />
-                      <span className="cmp-box" aria-hidden>
-                        <Check size={12} />
-                      </span>
-                      <span className="cmp-txt">Compare</span>
-                    </label>
-                    <ChevronDown size={18} className="chev" aria-hidden />
+                    <button type="button" className="btn btn--primary btn--sm rate-le-btn">
+                      <Download size={14} /> Loan Estimate
+                    </button>
+                    <div className="rate-actions-end">
+                      <label className={`cmp ${inCompare ? 'is-on' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={inCompare}
+                          onChange={() => props.toggleCompare(o.id)}
+                          aria-label={`Compare ${pct(o.rate)}`}
+                        />
+                        <span className="cmp-box" aria-hidden>
+                          <Check size={12} />
+                        </span>
+                        <span className="cmp-txt">Compare</span>
+                      </label>
+                      <ChevronDown size={18} className="chev" aria-hidden />
+                    </div>
                   </div>
                 </div>
 
@@ -426,9 +403,6 @@ export function RateExplorer(props: {
                             <b>{be} months ({(be / 12).toFixed(1)} yrs)</b>.
                           </li>
                         )}
-                        <li>
-                          Interest plus upfront cost over {horizon} years: <b>{usd(meta.costs.get(o.id)!)}</b>.
-                        </li>
                       </ul>
                     </div>
                   </div>
@@ -464,16 +438,16 @@ export function RateExplorer(props: {
             {OFFICER.name.split(' ')[0]} can walk you through points, credits and timing in a 15-minute call. No obligation.
           </p>
         </div>
-        <button className="btn btn--outline" onClick={props.onSchedule}>
+        <a href="#" className="btn btn--outline">
           <CalendarClock size={16} /> Schedule a call
-        </button>
+        </a>
       </div>
     </section>
   );
 }
 
 // ── Loan officer ──────────────────────────────────────────────
-export function OfficerCard({ onSchedule, uid }: { onSchedule: () => void; uid: string }) {
+export function OfficerCard({ uid }: { uid: string }) {
   return (
     <section className="panel officer" aria-labelledby={`lo-title-${uid}`}>
       <div className="officer-top">
@@ -510,9 +484,9 @@ export function OfficerCard({ onSchedule, uid }: { onSchedule: () => void; uid: 
         <ApplyLink className="btn btn--primary btn--block">
           Apply now <ArrowRight size={17} />
         </ApplyLink>
-        <button className="btn btn--outline btn--block" onClick={onSchedule}>
+        <a href="#" className="btn btn--outline btn--block">
           <CalendarClock size={16} /> Schedule a call
-        </button>
+        </a>
       </div>
       <p className="officer-trust">
         <ShieldCheck size={15} aria-hidden /> Checking rates never affects your credit score.
@@ -598,11 +572,9 @@ export function Footer() {
 export function ActionBar({
   visible,
   option,
-  onSchedule,
 }: {
   visible: boolean;
   option: RateOption;
-  onSchedule: () => void;
 }) {
   return (
     <div className={`actionbar ${visible ? 'is-on' : ''}`} aria-hidden={!visible}>
@@ -613,9 +585,9 @@ export function ActionBar({
             {usd(option.payment)}/mo · {option.termLabel}
           </span>
         </div>
-        <button className="btn btn--outline btn--sm actionbar-sec" onClick={onSchedule} tabIndex={visible ? 0 : -1}>
+        <a href="#" className="btn btn--outline btn--sm actionbar-sec" tabIndex={visible ? 0 : -1}>
           <CalendarClock size={16} /> <span>Schedule a call</span>
-        </button>
+        </a>
         <ApplyLink className="btn btn--primary btn--sm" tabIndex={visible ? 0 : -1}>
           Apply now <ArrowRight size={16} />
         </ApplyLink>

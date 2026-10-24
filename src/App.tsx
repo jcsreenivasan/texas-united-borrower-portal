@@ -4,15 +4,11 @@ import { ActionBar, CompareTray, Footer, Header, Hero, OfficerCard, RateExplorer
 import { CompareSheet } from './components/sheets';
 import { Toast } from './components/ui';
 
-/** "Schedule a call" intentionally does nothing yet (client to provide a booking link). */
-const scheduleCall = () => {};
-
 export default function App() {
   const [scenario, setScenario] = useState<Scenario>(DEFAULT_SCENARIO);
   const [term, setTerm] = useState<TermId>('30');
   const [waive, setWaive] = useState(false);
   const [showTotal, setShowTotal] = useState(false);
-  const [horizon, setHorizon] = useState(5);
   const [sort, setSort] = useState<SortKey>('rate');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [compare, setCompare] = useState<string[]>([]);
@@ -59,7 +55,7 @@ export default function App() {
 
   return (
     <div id="top">
-      <Header onSchedule={scheduleCall} onLogout={() => setToast('Prototype: this would sign you out.')} />
+      <Header onLogout={() => setToast('Prototype: this would sign you out.')} />
 
       <main className="wrap">
         <div className="greet">
@@ -72,7 +68,7 @@ export default function App() {
         <div className="layout">
           <div className="col-main">
             <div ref={heroRef}>
-              <Hero option={selected} scenario={scenario} isPicked={!!selectedId} onSchedule={scheduleCall} />
+              <Hero option={selected} scenario={scenario} isPicked={!!selectedId} />
             </div>
 
             <RateExplorer
@@ -85,8 +81,6 @@ export default function App() {
                   setExpanded(null);
                 })
               }
-              horizon={horizon}
-              setHorizon={setHorizon}
               sort={sort}
               setSort={setSort}
               waive={waive}
@@ -114,12 +108,11 @@ export default function App() {
                 });
                 setToast('Rates updated for your new details.');
               }}
-              onSchedule={scheduleCall}
               updating={updating}
             />
 
             <div className="only-mobile">
-              <OfficerCard uid="m" onSchedule={scheduleCall} />
+              <OfficerCard uid="m" />
             </div>
 
             <Reviews />
@@ -127,7 +120,7 @@ export default function App() {
 
           <aside className="col-side">
             <div className="side-sticky">
-              <OfficerCard uid="d" onSchedule={scheduleCall} />
+              <OfficerCard uid="d" />
             </div>
           </aside>
         </div>
@@ -136,14 +129,13 @@ export default function App() {
       <Footer />
 
       <CompareTray count={compare.length} onOpen={() => setCompareOpen(true)} onClear={() => setCompare([])} lifted={heroOut} />
-      <ActionBar visible={heroOut} option={selected} onSchedule={scheduleCall} />
+      <ActionBar visible={heroOut} option={selected} />
 
       <CompareSheet
         open={compareOpen}
         onClose={closeCompare}
         options={compare.map((id) => all.get(id)!).filter(Boolean)}
         scenario={scenario}
-        horizon={horizon}
       />
 
       <Toast message={toast} onDone={clearToast} />

@@ -10,7 +10,6 @@ import {
   RateOption,
   Scenario,
   breakEven,
-  costOver,
   loanAmount,
   pct,
   usd,
@@ -164,20 +163,15 @@ export function CompareSheet({
   onClose,
   options,
   scenario,
-  horizon,
 }: {
   open: boolean;
   onClose: () => void;
   options: RateOption[];
   scenario: Scenario;
-  horizon: number;
 }) {
-  const loan = loanAmount(scenario);
   if (!options.length) return <Sheet open={open} onClose={onClose} title="Compare rates">{null}</Sheet>;
-  const costs = options.map((o) => costOver(o, loan, horizon));
-  const best = costs.indexOf(Math.min(...costs));
   const ref = options.reduce((a, b) => (b.fees < a.fees ? b : a));
-  const rows: { label: string; vals: string[]; hi?: number }[] = [
+  const rows: { label: string; vals: string[] }[] = [
     { label: 'APR', vals: options.map((o) => pct(o.apr)) },
     { label: 'Term', vals: options.map((o) => o.termLabel) },
     { label: 'Monthly P&I', vals: options.map((o) => usd(o.payment)) },
@@ -189,18 +183,16 @@ export function CompareSheet({
         return o.id === ref.id ? '—' : b ? `${b} months` : '—';
       }),
     },
-    { label: `Cost over ${horizon} yrs`, vals: costs.map((c) => usd(c)), hi: best },
   ];
   return (
-    <Sheet open={open} onClose={onClose} size="lg" title="Compare rates" subtitle={`Cost over ${horizon} years counts interest paid plus upfront points or credits.`}>
+    <Sheet open={open} onClose={onClose} size="lg" title="Compare rates" subtitle="Break-even shows months to recover extra upfront cost vs. the lowest-cost option.">
       <div className="cmp-scroll">
         <table className="cmp-table">
           <thead>
             <tr>
               <th scope="col"><span className="sr">Detail</span></th>
-              {options.map((o, i) => (
-                <th scope="col" key={o.id} className={i === best ? 'is-best' : ''}>
-                  {i === best && <span className="tag tag--green">Best value</span>}
+              {options.map((o) => (
+                <th scope="col" key={o.id}>
                   <span className="cmp-rate">{pct(o.rate)}</span>
                 </th>
               ))}
@@ -211,9 +203,7 @@ export function CompareSheet({
               <tr key={r.label}>
                 <th scope="row">{r.label}</th>
                 {r.vals.map((v, i) => (
-                  <td key={i} className={r.hi === i ? 'is-hi' : ''}>
-                    {v}
-                  </td>
+                  <td key={i}>{v}</td>
                 ))}
               </tr>
             ))}
