@@ -278,13 +278,6 @@ a {
   height: 36px;
   width: auto;
 }
-.topbar-label {
-  font-size: 13px;
-  color: var(--ink-3);
-  padding-left: 16px;
-  border-left: 1px solid var(--line);
-  line-height: 20px;
-}
 .topbar-right {
   margin-left: auto;
   display: flex;
@@ -618,11 +611,6 @@ a {
   gap: 12px;
   flex-wrap: wrap;
   margin-bottom: 12px;
-}
-.list-toggles {
-  display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
 }
 .toggle {
   display: inline-flex;
@@ -1952,9 +1940,6 @@ a {
   }
   .brand img {
     height: 30px;
-  }
-  .topbar-label {
-    display: none;
   }
   .wrap {
     padding-block: 20px 120px;

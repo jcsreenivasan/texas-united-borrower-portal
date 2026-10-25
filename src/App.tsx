@@ -7,8 +7,6 @@ import { Toast } from './components/ui';
 export default function App() {
   const [scenario, setScenario] = useState<Scenario>(DEFAULT_SCENARIO);
   const [term, setTerm] = useState<TermId>('30');
-  const [waive, setWaive] = useState(false);
-  const [showTotal, setShowTotal] = useState(false);
   const [sort, setSort] = useState<SortKey>('rate');
   const [selectedId] = useState<string | null>(null);
   const [compare, setCompare] = useState<string[]>([]);
@@ -23,9 +21,9 @@ export default function App() {
   // price every term so comparisons can span terms
   const all = useMemo(() => {
     const m = new Map<string, RateOption>();
-    TERMS.forEach((t) => priceRates(scenario, t.id, waive).forEach((o) => m.set(o.id, o)));
+    TERMS.forEach((t) => priceRates(scenario, t.id, false).forEach((o) => m.set(o.id, o)));
     return m;
-  }, [scenario, waive]);
+  }, [scenario]);
   const options = useMemo(() => [...all.values()].filter((o) => o.id.startsWith(`${term}-`)), [all, term]);
 
   const lowest = options.reduce((a, b) => (b.rate < a.rate ? b : a));
@@ -55,7 +53,7 @@ export default function App() {
 
   return (
     <div id="top">
-      <Header onLogout={() => setToast('Prototype: this would sign you out.')} />
+      <Header />
 
       <main className="wrap">
         <div className="greet">
@@ -83,10 +81,6 @@ export default function App() {
               }
               sort={sort}
               setSort={setSort}
-              waive={waive}
-              setWaive={(b) => flash(() => setWaive(b))}
-              showTotal={showTotal}
-              setShowTotal={setShowTotal}
               compare={compare}
               toggleCompare={(id) =>
                 setCompare((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length >= 3 ? [...p.slice(1), id] : [...p, id]))

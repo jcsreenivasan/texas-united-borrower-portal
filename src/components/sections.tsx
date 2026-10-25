@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import {
   ArrowRight,
   CalendarClock,
@@ -7,7 +7,6 @@ import {
   Clock3,
   Download,
   ExternalLink,
-  LogOut,
   Mail,
   Pencil,
   Phone,
@@ -37,69 +36,26 @@ import {
   usd,
   zipInfo,
 } from '../lib';
-import { ApplyLink, LoneStar, Segmented, Stars, Toggle, useTween } from './ui';
+import { ApplyLink, LoneStar, Segmented, Stars, useTween } from './ui';
 import { ScenarioForm } from './sheets';
 
 // ── Header ────────────────────────────────────────────────────
-export function Header({ onLogout }: { onLogout: () => void }) {
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => !menuRef.current?.contains(e.target as Node) && setOpen(false);
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
-    document.addEventListener('mousedown', onDoc);
-    window.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDoc);
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
+export function Header() {
   return (
     <header className="topbar">
       <div className="topbar-in">
         <a href="#top" className="brand" aria-label="Texas United Mortgage home">
           <img src={logo} alt="Texas United Mortgage" />
         </a>
-        <span className="topbar-label">Borrower portal</span>
         <div className="topbar-right">
           <a href="#" className="btn btn--ghost btn--sm hide-sm">
             <CalendarClock size={16} /> Schedule a call
           </a>
-          <div className="account" ref={menuRef}>
-            <button
-              className="avatar-btn"
-              aria-label="Account menu"
-              aria-haspopup="menu"
-              aria-expanded={open}
-              onClick={() => setOpen((o) => !o)}
-            >
+          <div className="account">
+            <div className="avatar-btn">
               <span className="avatar">{BORROWER.initials}</span>
               <span className="hide-sm">{BORROWER.first}</span>
-              <ChevronDown size={16} className={`hide-sm chev-sm ${open ? 'flip' : ''}`} />
-            </button>
-            {open && (
-              <div className="menu" role="menu">
-                <div className="menu-head">
-                  <span className="avatar">{BORROWER.initials}</span>
-                  <span>
-                    <b>{BORROWER.first}</b>
-                    <small>Borrower portal</small>
-                  </span>
-                </div>
-                <button
-                  role="menuitem"
-                  className="menu-item"
-                  onClick={() => {
-                    setOpen(false);
-                    onLogout();
-                  }}
-                >
-                  <LogOut size={16} /> Log out
-                </button>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
@@ -210,10 +166,6 @@ export function RateExplorer(props: {
   setTerm: (t: TermId) => void;
   sort: SortKey;
   setSort: (s: SortKey) => void;
-  waive: boolean;
-  setWaive: (b: boolean) => void;
-  showTotal: boolean;
-  setShowTotal: (b: boolean) => void;
   compare: string[];
   toggleCompare: (id: string) => void;
   expanded: string | null;
@@ -223,7 +175,7 @@ export function RateExplorer(props: {
   onScenario: (s: Scenario) => void;
   updating: boolean;
 }) {
-  const { scenario, options, sort, showTotal } = props;
+  const { scenario, options, sort } = props;
   const est = estimates(scenario);
   const extra = est.tax + est.ins + est.mi;
 
@@ -266,10 +218,6 @@ export function RateExplorer(props: {
       </div>
 
       <div className="list-tools">
-        <div className="list-toggles">
-          <Toggle id="waive" checked={props.waive} onChange={props.setWaive} label="Waive escrows" />
-          <Toggle id="total" checked={showTotal} onChange={props.setShowTotal} label="Show total payment" />
-        </div>
         <label className="sort">
           <span>Sort</span>
           <select id="sort" value={sort} onChange={(e) => props.setSort(e.target.value as SortKey)}>
@@ -286,7 +234,7 @@ export function RateExplorer(props: {
         <div className="rate-head" aria-hidden>
           <span>Rate / APR</span>
           <span>Upfront</span>
-          <span>{showTotal ? 'Total monthly' : 'Monthly P&I'}</span>
+          <span>Monthly P&I</span>
           <span />
         </div>
         <ul className="rate-list">
@@ -294,7 +242,7 @@ export function RateExplorer(props: {
             const isOpen = props.expanded === o.id;
             const inCompare = props.compare.includes(o.id);
             const be = breakEven(o, meta.ref);
-            const monthly = o.payment + (showTotal ? extra : 0);
+            const monthly = o.payment;
             return (
               <li key={o.id} className={`rate-row ${isOpen ? 'is-open' : ''}`}>
                 <div className="rate-main">
@@ -326,7 +274,7 @@ export function RateExplorer(props: {
                       )}
                     </span>
                     <span className="rate-cell rate-cell--pay">
-                      <span className="cell-label">{showTotal ? 'Total' : 'P&I'}</span>
+                      <span className="cell-label">P&I</span>
                       <span className="v">
                         {usd(monthly)}
                         <small>/mo</small>
