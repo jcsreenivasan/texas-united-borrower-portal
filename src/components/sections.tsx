@@ -214,8 +214,6 @@ export function RateExplorer(props: {
   setWaive: (b: boolean) => void;
   showTotal: boolean;
   setShowTotal: (b: boolean) => void;
-  selectedId: string;
-  onSelect: (id: string) => void;
   compare: string[];
   toggleCompare: (id: string) => void;
   expanded: string | null;
@@ -230,10 +228,8 @@ export function RateExplorer(props: {
   const extra = est.tax + est.ins + est.mi;
 
   const meta = useMemo(() => {
-    const lowestRate = options.reduce((a, b) => (b.rate < a.rate ? b : a));
-    const lowestUpfront = options.reduce((a, b) => (b.fees < a.fees ? b : a));
     const ref = options.reduce((a, b) => (Math.abs(b.points) < Math.abs(a.points) ? b : a));
-    return { lowestRate, lowestUpfront, ref };
+    return { ref };
   }, [options]);
 
   const sorted = useMemo(() => {
@@ -295,16 +291,12 @@ export function RateExplorer(props: {
         </div>
         <ul className="rate-list">
           {visible.map((o) => {
-            const tags: { label: string; tone: string }[] = [];
-            if (o.id === meta.lowestRate.id) tags.push({ label: 'Lowest rate', tone: 'navy' });
-            if (o.id === meta.lowestUpfront.id) tags.push({ label: 'Lowest closing cost', tone: 'slate' });
             const isOpen = props.expanded === o.id;
-            const isSel = props.selectedId === o.id;
             const inCompare = props.compare.includes(o.id);
             const be = breakEven(o, meta.ref);
             const monthly = o.payment + (showTotal ? extra : 0);
             return (
-              <li key={o.id} className={`rate-row ${isOpen ? 'is-open' : ''} ${isSel ? 'is-selected' : ''}`}>
+              <li key={o.id} className={`rate-row ${isOpen ? 'is-open' : ''}`}>
                 <div className="rate-main">
                   <button
                     className="rate-hit"
@@ -340,20 +332,6 @@ export function RateExplorer(props: {
                         <small>/mo</small>
                       </span>
                     </span>
-                    {(tags.length > 0 || isSel) && (
-                      <span className="rate-tags">
-                        {isSel && (
-                          <span className="tag tag--sel">
-                            <Check size={12} /> Selected
-                          </span>
-                        )}
-                        {tags.map((t) => (
-                          <span key={t.label} className={`tag tag--${t.tone}`}>
-                            {t.label}
-                          </span>
-                        ))}
-                      </span>
-                    )}
                   </button>
                   <div className="rate-actions">
                     <button type="button" className="btn btn--soft btn--sm rate-le-btn">
@@ -406,9 +384,6 @@ export function RateExplorer(props: {
                     </div>
                   </div>
                   <div className="detail-actions">
-                    <button className="btn btn--outline btn--sm" onClick={() => props.onSelect(o.id)} disabled={isSel}>
-                      {isSel ? <><Check size={15} /> Selected</> : 'Select this rate'}
-                    </button>
                     <ApplyLink className="btn btn--primary btn--sm">
                       Apply with this rate <ArrowRight size={15} />
                     </ApplyLink>
@@ -564,27 +539,19 @@ export function Footer() {
 }
 
 // ── Sticky actions (mobile) / floating bar (desktop) ──────────
-export function ActionBar({
-  visible,
-  option,
-}: {
-  visible: boolean;
-  option: RateOption;
-}) {
+export function ActionBar({ visible }: { visible: boolean }) {
   return (
     <div className={`actionbar ${visible ? 'is-on' : ''}`} aria-hidden={!visible}>
       <div className="actionbar-in">
         <div className="actionbar-copy">
-          <b>{pct(option.rate)}</b>
-          <span>
-            {usd(option.payment)}/mo · {option.termLabel}
-          </span>
+          <b>Ready to lock in your savings?</b>
+          <span>Start your application today and see your potential monthly savings.</span>
         </div>
         <a href="#" className="btn btn--outline btn--sm actionbar-sec" tabIndex={visible ? 0 : -1}>
           <CalendarClock size={16} /> <span>Schedule a call</span>
         </a>
-        <ApplyLink className="btn btn--primary btn--sm" tabIndex={visible ? 0 : -1}>
-          Apply now <ArrowRight size={16} />
+        <ApplyLink className="btn btn--navy btn--sm" tabIndex={visible ? 0 : -1}>
+          Apply Now <ArrowRight size={16} />
         </ApplyLink>
       </div>
     </div>

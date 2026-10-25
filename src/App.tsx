@@ -10,7 +10,7 @@ export default function App() {
   const [waive, setWaive] = useState(false);
   const [showTotal, setShowTotal] = useState(false);
   const [sort, setSort] = useState<SortKey>('rate');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId] = useState<string | null>(null);
   const [compare, setCompare] = useState<string[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
@@ -87,11 +87,6 @@ export default function App() {
               setWaive={(b) => flash(() => setWaive(b))}
               showTotal={showTotal}
               setShowTotal={setShowTotal}
-              selectedId={selected.id}
-              onSelect={(id) => {
-                setSelectedId(id);
-                setToast('Rate selected. Your summary is updated.');
-              }}
               compare={compare}
               toggleCompare={(id) =>
                 setCompare((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length >= 3 ? [...p.slice(1), id] : [...p, id]))
@@ -129,7 +124,7 @@ export default function App() {
       <Footer />
 
       <CompareTray count={compare.length} onOpen={() => setCompareOpen(true)} onClear={() => setCompare([])} lifted={heroOut} />
-      <ActionBar visible={heroOut} option={selected} />
+      <ActionBar visible={heroOut} />
 
       <CompareSheet
         open={compareOpen}
