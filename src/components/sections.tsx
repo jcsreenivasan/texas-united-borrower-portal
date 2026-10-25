@@ -474,9 +474,13 @@ export function Footer() {
           <img src={equalHousing} alt="Equal Housing Opportunity" className="eho" width={49} height={52} />
         </div>
         <p className="foot-legal">
-          Prototype for demonstration. Rates shown are sample data and are not an offer to lend. Additional fees may apply which may
-          impact your APR. Transaction details may impact price. Results and a rate lock do not guarantee eligibility. A loan file
-          submission is required and is subject to full due diligence. Estimated taxes and insurance are for illustration only.
+          Additional fees may apply which may impact your APR. Transaction details are based on the information provided and may
+          include assumptions about the consumer, product, or pricing. Changes to transaction details may impact price. System results
+          and a rate lock does not guarantee eligibility. A loan file Submission is required and will be subject to full diligence
+          procedures. Your actual rate, payment, and costs could be higher. Get an official Loan Estimate before choosing a loan.
+          Products displayed are based on some assumptions on loan data. Actual eligible products may vary once complete loan
+          information is available for pricing. All rates and programs subject to loan underwriting and approval and may be subject to
+          change depending on individual credit profile and other qualifications.
         </p>
         <a className="made-with" href={LIMESITE_URL} target="_blank" rel="noopener noreferrer">
           Made with <span className="made-heart" aria-hidden>❤️</span> <b>Limesite.io</b>
