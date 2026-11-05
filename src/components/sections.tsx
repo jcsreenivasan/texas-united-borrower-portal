@@ -461,7 +461,7 @@ export function Reviews() {
 }
 
 // ── Footer ────────────────────────────────────────────────────
-export function Footer() {
+export function Footer({ onDisabled }: { onDisabled?: () => void }) {
   return (
     <footer className="foot">
       <div className="foot-in">
@@ -481,8 +481,24 @@ export function Footer() {
         <a className="made-with" href={LIMESITE_URL} target="_blank" rel="noopener noreferrer">
           Made with <span className="made-heart" aria-hidden>❤️</span> <b>Limesite.io</b>
         </a>
+        {onDisabled && (
+          <button className="foot-state-link" onClick={onDisabled}>disabled state</button>
+        )}
       </div>
     </footer>
+  );
+}
+
+// ── Disabled / paused state page ──────────────────────────────
+export function DisabledView({ onBack }: { onBack: () => void }) {
+  return (
+    <main className="disabled-page">
+      <button className="disabled-back" onClick={onBack}>← Back to your quote</button>
+      <h1 className="disabled-heading">Thank you for your trust. We're always here when you need us.</h1>
+      <div className="disabled-card">
+        <OfficerCard uid="dv" />
+      </div>
+    </main>
   );
 }
 

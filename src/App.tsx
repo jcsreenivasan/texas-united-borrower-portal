@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BORROWER, DEFAULT_SCENARIO, RateOption, Scenario, TERMS, TermId, priceRates } from './lib';
-import { ActionBar, CompareTray, Footer, Header, Hero, OfficerCard, RateExplorer, Reviews, SortKey } from './components/sections';
+import { ActionBar, CompareTray, DisabledView, Footer, Header, Hero, OfficerCard, RateExplorer, Reviews, SortKey } from './components/sections';
 import { CompareSheet } from './components/sheets';
 import { Toast } from './components/ui';
 
@@ -16,6 +16,7 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [heroOut, setHeroOut] = useState(false);
+  const [view, setView] = useState<'main' | 'disabled'>('main');
   const heroRef = useRef<HTMLDivElement>(null);
 
   // price every term so comparisons can span terms
@@ -55,79 +56,85 @@ export default function App() {
     <div id="top">
       <Header />
 
-      <main className="wrap">
-        <div className="greet">
-          <h1>
-            {greeting}, {BORROWER.first}.
-          </h1>
-          <p className="muted">Your personalized quote is ready. Compare your options, then apply or talk it through with Richard.</p>
-        </div>
-
-        <div className="layout">
-          <div className="col-main">
-            <div ref={heroRef}>
-              <Hero option={selected} scenario={scenario} isPicked={!!selectedId} />
+      {view === 'disabled' ? (
+        <DisabledView onBack={() => setView('main')} />
+      ) : (
+        <>
+          <main className="wrap">
+            <div className="greet">
+              <h1>
+                {greeting}, {BORROWER.first}.
+              </h1>
+              <p className="muted">Your personalized quote is ready. Compare your options, then apply or talk it through with Richard.</p>
             </div>
 
-            <RateExplorer
-              scenario={scenario}
-              options={options}
-              term={term}
-              setTerm={(t) =>
-                flash(() => {
-                  setTerm(t);
-                  setExpanded(null);
-                })
-              }
-              sort={sort}
-              setSort={setSort}
-              compare={compare}
-              toggleCompare={(id) =>
-                setCompare((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length >= 3 ? [...p.slice(1), id] : [...p, id]))
-              }
-              expanded={expanded}
-              setExpanded={setExpanded}
-              showAll={showAll}
-              setShowAll={setShowAll}
-              onScenario={(s) => {
-                flash(() => {
-                  setScenario(s);
-                  setCompare([]);
-                  setExpanded(null);
-                });
-                setToast('Rates updated for your new details.');
-              }}
-              updating={updating}
-            />
+            <div className="layout">
+              <div className="col-main">
+                <div ref={heroRef}>
+                  <Hero option={selected} scenario={scenario} isPicked={!!selectedId} />
+                </div>
 
-            <div className="only-mobile">
-              <OfficerCard uid="m" />
+                <RateExplorer
+                  scenario={scenario}
+                  options={options}
+                  term={term}
+                  setTerm={(t) =>
+                    flash(() => {
+                      setTerm(t);
+                      setExpanded(null);
+                    })
+                  }
+                  sort={sort}
+                  setSort={setSort}
+                  compare={compare}
+                  toggleCompare={(id) =>
+                    setCompare((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length >= 3 ? [...p.slice(1), id] : [...p, id]))
+                  }
+                  expanded={expanded}
+                  setExpanded={setExpanded}
+                  showAll={showAll}
+                  setShowAll={setShowAll}
+                  onScenario={(s) => {
+                    flash(() => {
+                      setScenario(s);
+                      setCompare([]);
+                      setExpanded(null);
+                    });
+                    setToast('Rates updated for your new details.');
+                  }}
+                  updating={updating}
+                />
+
+                <div className="only-mobile">
+                  <OfficerCard uid="m" />
+                </div>
+              </div>
+
+              <aside className="col-side">
+                <div className="side-sticky">
+                  <OfficerCard uid="d" />
+                </div>
+              </aside>
             </div>
-          </div>
 
-          <aside className="col-side">
-            <div className="side-sticky">
-              <OfficerCard uid="d" />
-            </div>
-          </aside>
-        </div>
+            <Reviews />
+          </main>
 
-        <Reviews />
-      </main>
+          <CompareTray count={compare.length} onOpen={() => setCompareOpen(true)} onClear={() => setCompare([])} lifted={heroOut} />
+          <ActionBar visible={heroOut} />
 
-      <Footer />
+          <CompareSheet
+            open={compareOpen}
+            onClose={closeCompare}
+            options={compare.map((id) => all.get(id)!).filter(Boolean)}
+            scenario={scenario}
+          />
 
-      <CompareTray count={compare.length} onOpen={() => setCompareOpen(true)} onClear={() => setCompare([])} lifted={heroOut} />
-      <ActionBar visible={heroOut} />
+          <Toast message={toast} onDone={clearToast} />
+        </>
+      )}
 
-      <CompareSheet
-        open={compareOpen}
-        onClose={closeCompare}
-        options={compare.map((id) => all.get(id)!).filter(Boolean)}
-        scenario={scenario}
-      />
-
-      <Toast message={toast} onDone={clearToast} />
+      <Footer onDisabled={() => setView('disabled')} />
     </div>
   );
 }

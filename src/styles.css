@@ -1277,6 +1277,54 @@ a {
   max-width: 110ch;
 }
 
+.foot-state-link {
+  font-size: 11px;
+  color: var(--ink-3);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  margin-top: -4px;
+}
+.foot-state-link:hover {
+  color: var(--ink-2);
+}
+
+/* ── Disabled state page ─────────────────────────────────── */
+.disabled-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px max(16px, env(safe-area-inset-left, 0px)) 80px;
+  gap: 28px;
+  min-height: calc(100vh - 64px - 180px);
+}
+.disabled-back {
+  align-self: flex-start;
+  font-size: 13px;
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+.disabled-back:hover {
+  color: var(--navy);
+}
+.disabled-heading {
+  font-family: var(--display);
+  font-size: clamp(22px, 4vw, 32px);
+  color: var(--navy);
+  text-align: center;
+  max-width: 520px;
+  line-height: 1.3;
+  margin: 0;
+  font-weight: 400;
+}
+.disabled-card {
+  width: min(480px, 100%);
+}
+
 /* ── Action bar ──────────────────────────────────────────── */
 .actionbar {
   position: fixed;
