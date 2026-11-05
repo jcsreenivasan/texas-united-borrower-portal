@@ -8,7 +8,6 @@ import {
   Download,
   ExternalLink,
   Mail,
-  Pencil,
   Phone,
   ShieldCheck,
 } from 'lucide-react';
@@ -48,7 +47,7 @@ export function Header() {
           <img src={logo} alt="Texas United Mortgage" />
         </a>
         <div className="topbar-right">
-          <a href="#" className="btn btn--ghost btn--sm hide-sm">
+          <a href="https://meetings.hubspot.com/richard-haskell" target="_blank" rel="noopener noreferrer" className="btn btn--ghost btn--sm hide-sm">
             <CalendarClock size={16} /> Schedule a call
           </a>
           <div className="account">
@@ -145,11 +144,8 @@ export function Hero({
         <ApplyLink className="btn btn--primary btn--lg">
           Apply now <ArrowRight size={18} />
         </ApplyLink>
-        <a href="#" className="btn btn--onDark btn--lg">
+        <a href="https://meetings.hubspot.com/richard-haskell" target="_blank" rel="noopener noreferrer" className="btn btn--onDark btn--lg">
           <CalendarClock size={18} /> Schedule a call
-        </a>
-        <a className="link-light" href="#details">
-          <Pencil size={14} /> Edit my details
         </a>
       </div>
     </section>
@@ -233,7 +229,7 @@ export function RateExplorer(props: {
       <div className={`rate-table ${props.updating ? 'is-updating' : ''}`}>
         <div className="rate-head" aria-hidden>
           <span>Rate / APR</span>
-          <span>Upfront</span>
+          <span>Points</span>
           <span>Monthly P&I</span>
           <span />
         </div>
@@ -260,7 +256,7 @@ export function RateExplorer(props: {
                       </span>
                     </span>
                     <span className="rate-cell rate-cell--up">
-                      <span className="cell-label">Upfront</span>
+                      <span className="cell-label">Points</span>
                       {o.fees >= 0 ? (
                         <>
                           <span className="v">{usd(o.fees)}</span>
@@ -360,7 +356,7 @@ export function RateExplorer(props: {
             {OFFICER.name.split(' ')[0]} can walk you through points, credits and timing in a 15-minute call. No obligation.
           </p>
         </div>
-        <a href="#" className="btn btn--outline">
+        <a href="https://meetings.hubspot.com/richard-haskell" target="_blank" rel="noopener noreferrer" className="btn btn--outline">
           <CalendarClock size={16} /> Schedule a call
         </a>
       </div>
@@ -406,7 +402,7 @@ export function OfficerCard({ uid }: { uid: string }) {
         <ApplyLink className="btn btn--primary btn--block">
           Apply now <ArrowRight size={17} />
         </ApplyLink>
-        <a href="#" className="btn btn--outline btn--block">
+        <a href="https://meetings.hubspot.com/richard-haskell" target="_blank" rel="noopener noreferrer" className="btn btn--outline btn--block">
           <CalendarClock size={16} /> Schedule a call
         </a>
       </div>
@@ -499,7 +495,7 @@ export function ActionBar({ visible }: { visible: boolean }) {
           <b>Ready to lock in your savings?</b>
           <span>Start your application today and see your potential monthly savings.</span>
         </div>
-        <a href="#" className="btn btn--outline btn--sm actionbar-sec" tabIndex={visible ? 0 : -1}>
+        <a href="https://meetings.hubspot.com/richard-haskell" target="_blank" rel="noopener noreferrer" className="btn btn--outline btn--sm actionbar-sec" tabIndex={visible ? 0 : -1}>
           <CalendarClock size={16} /> <span>Schedule a call</span>
         </a>
         <ApplyLink className="btn btn--navy btn--sm" tabIndex={visible ? 0 : -1}>
